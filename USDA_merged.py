@@ -8,6 +8,7 @@ Analysis using only the processed file on foods.
 """
 
 
+from scipy.optimize import linprog
 import pandas as pd
 import numpy as np
 
@@ -142,11 +143,18 @@ filtered = df_usda[columns_of_interest].loc[item_list].fillna(0)
 
 #%% Setting a random amount of consumption to calculate the total for each nutrient
 
-amounts = pd.DataFrame(np.random.randint(0,10,len(item_list)),index=filtered.index, columns = ['Amount'])
+# amounts = pd.DataFrame(np.random.randint(0,10,len(item_list)),index=filtered.index, columns = ['Amount']) # beautiful solution
+amounts = np.random.randint(0,10,len(item_list)) # required format for optimizer. But does not look nice. 
 
-results = (amounts.T.dot(filtered)).T[2:]
-results
+def calculate_nutrient_scores(food_quantities):
+    # Your nutrient scoring function
+    # This function should take food quantities as input and return nutrient scores
+    # Replace this with your actual nutrient scoring logic
 
+    nutrient_scores = (food_quantities.T.dot(filtered.iloc[:,2:]))
+    return nutrient_scores
+
+calculate_nutrient_scores(amounts)
 #%% DRI limits
 CD = 1800 # Abbreviation for Calorie Diet. 
 
@@ -177,3 +185,6 @@ https://www.ncbi.nlm.nih.gov/books/NBK545442/
 
 
 """
+
+#%%
+
