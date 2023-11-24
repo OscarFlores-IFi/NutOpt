@@ -2,12 +2,15 @@
 """
 Created on Wed Nov 22 15:04:28 2023
 
-@author: 52331
+@author: Oscar Flores
+
+This File generates a single csv containing only information on the category
+Food name and all the Nutrients as columns. 
 """
 
 import pandas as pd
 
-directory = r'C:\Users\52331\Downloads\FoodData_Central_sr_legacy_food_csv_2018-04\FoodData_Central_sr_legacy_food_csv_2018-04\\'
+directory = r'C:\Users\52331\Documents\GitHub\NutOpt\\'
 
 #%% Fetch data
 

@@ -2,7 +2,9 @@
 """
 Created on Thu Nov 23 22:19:44 2023
 
-@author: 52331
+@author: Oscar Flores
+
+This is the draft that will later become a front end for the optimizer
 """
 
 import streamlit as st

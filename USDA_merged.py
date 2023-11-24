@@ -2,15 +2,16 @@
 """
 Created on Thu Nov 23 13:30:57 2023
 
-@author: 52331
+@author: Oscar Flores
 
-Analysis using only the processed file on foods. 
+Analysis using only the processed file on foods.
 """
 
 
 import pandas as pd
+import numpy as np
 
-directory = r'C:\Users\52331\Downloads\FoodData_Central_sr_legacy_food_csv_2018-04\FoodData_Central_sr_legacy_food_csv_2018-04\\'
+directory = r'C:\Users\52331\Documents\GitHub\NutOpt\\'
 
 #%% Fetch data
 
@@ -23,16 +24,13 @@ columns_of_interest =[
     'FOOD_NAME',
     'Protein(G)',
     'Energy(KCAL)',
-    'Water(G)',
     'Fatty acids, total saturated(G)',
     'Total lipid (fat)(G)',
     'Carbohydrate, by difference(G)',
     'Vitamin A, IU(IU)',
     'Vitamin C, total ascorbic acid(MG)',
     'Fatty acids, total monounsaturated(G)',
-    'Fatty acids, total polyunsaturated(G)',
-    'Magnesium, Mg(MG)',
-    'Manganese, Mn(MG)',  
+    'Fatty acids, total polyunsaturated(G)', 
     ]
 
 categories_of_interest = [
@@ -140,19 +138,31 @@ item_list = [
     ]
 
 
-filtered = df_usda[columns_of_interest].loc[item_list]
-unprocessed = filtered[filtered['FOOD_NAME'].str.contains(' raw')]
+filtered = df_usda[columns_of_interest].loc[item_list].fillna(0)
 
+#%% Setting a random amount of consumption to calculate the total for each nutrient
 
+amounts = pd.DataFrame(np.random.randint(0,10,len(item_list)),index=filtered.index, columns = ['Amount'])
 
+results = (amounts.T.dot(filtered)).T[2:]
+results
 
+#%% DRI limits
+CD = 1800 # Abbreviation for Calorie Diet. 
 
-#%% DRI 
-Fat = [20,35]
-Polyunsaturated_fatty_acids_n_6 = [5,10]
-Polyunsaturated_fatty_acids_n_3 = [0.6,1.2]
-Carbohydrate = [45,65]
-Protein = [10,35]
+limits = pd.DataFrame({
+    'Protein(G)':[CD*0.10/4,CD*0.35/4],                      # 10% to 35% of calorie intake, 4 calories per gram of protein.
+    'Energy(KCAL)':[CD*0.95, CD*1.05],                       # I guess it's ok if we deviate 5% from the required intake. 
+    'Fatty acids, total saturated(G)':[CD*0.04/9,CD*0.06/9], 
+    'Total lipid (fat)(G)':[0,CD*0.30/9],                    # 10% to 30% of calorie intake, 9 calories per gram of fat.
+    'Carbohydrate, by difference(G)':[CD*0.45/4,CD*0.65/4],  # 45% to 65% of calorie intake, 4 calories per Carb.  
+    'Vitamin A, IU(IU)':[2000,5000],
+    'Vitamin C, total ascorbic acid(MG)':[60,120],
+    'Fatty acids, total monounsaturated(G)':[CD*0.15/9,CD*0.20/9],
+    'Fatty acids, total polyunsaturated(G)':[CD*0.05/9,CD*0.10/9], 
+    },
+    index=['LOWER_LIMIT', 'HIGHER_LIMIT']).T
+    
 
 
 """
