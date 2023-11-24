@@ -3,6 +3,27 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# original csv files
+all_downloaded_table_record_counts.csv
+Download & API Field Descriptions-2019-10-11-16-22.xlsx
+food.csv
+food_attribute.csv
+food_attribute_type.csv
+food_calorie_conversion_factor.csv
+food_category.csv
+food_nutrient.csv
+food_nutrient_conversion_factor.csv
+food_nutrient_derivation.csv
+food_nutrient_source.csv
+food_portion.csv
+food_protein_conversion_factor.csv
+food_update_log_entry.csv
+measure_unit.csv
+nutrient.csv
+retention_factor.csv
+sr_legacy_food.csv
+
+
 # C extensions
 *.so
 
