@@ -8,9 +8,16 @@ Analysis using only the processed file on foods.
 """
 
 
-from scipy.optimize import minimize
+
+# from scipy.optimize import minimize
+import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
+from sklearn.cluster import DBSCAN
+# from pymoo.algorithms.soo.nonconvex.pso import PSO
+# from pymoo.problems.single import Rastrigin
+# from pymoo.optimize import minimize
+
 
 directory = r'C:\Users\52331\Documents\GitHub\NutOpt\\'
 
@@ -27,7 +34,29 @@ if candidates.shape[0]<10:
     
 #%% List of items we want:
 
-columns_of_interest = df_usda.columns 
+columns_of_interest = [
+    'CATEGORY', 
+    'FOOD_NAME',
+    'Protein(G)',
+    'Cholesterol(MG)',
+    'Fiber, total dietary(G)',
+    'Fatty acids, total trans(G)',
+    'Iron, Fe(MG)',
+    'Sodium, Na(MG)',
+    'Fatty acids, total saturated(G)',
+    'Carbohydrate, by difference(G)',
+    'Energy(KCAL)',
+    'Water(G)',
+    'Sugars, Total(G)',
+    'Vitamin A, IU(IU)',
+    'Vitamin C, total ascorbic acid(MG)',
+    'Calcium, Ca(MG)',
+    'Fatty acids, total monounsaturated(G)',
+    'Fatty acids, total polyunsaturated(G)',
+    'Tocopherol, delta(MG)',
+    'Thiamin(MG)',
+    'Total lipid (fat)(G)',
+    ]
     
 item_list = [
     # Aqui empiezan los sugeridos por la applicacion 'Avena'
@@ -226,58 +255,57 @@ def calculate_nutrient_scores(food_quantities):
     return nutrient_scores
 
 print(calculate_nutrient_scores(amounts))
-#%% DRI limits
-CD = 1800 # Abbreviation for Calorie Diet. 
-
-limits = pd.DataFrame({
-    'Protein(G)':[CD*0.10/4,CD*0.35/4],                      # 10% to 35% of calorie intake, 4 calories per gram of protein.
-    'Energy(KCAL)':[CD*0.95, CD*1.05],                       # I guess it's ok if we deviate 5% from the required intake. 
-    'Fatty acids, total saturated(G)':[CD*0.04/9,CD*0.06/9],
-    'Total lipid (fat)(G)':[0,CD*0.30/9],                    # 10% to 30% of calorie intake, 9 calories per gram of fat.
-    'Carbohydrate, by difference(G)':[CD*0.45/4,CD*0.65/4],  # 45% to 65% of calorie intake, 4 calories per Carb.  
-    'Vitamin A, IU(IU)':[CD,CD*3],
-    'Vitamin C, total ascorbic acid(MG)':[CD/60,CD/30],
-    'Fatty acids, total monounsaturated(G)':[CD*0.15/9,CD*0.20/9],
-    'Fatty acids, total polyunsaturated(G)':[CD*0.05/9,CD*0.10/9], 
-    },
-    index=['LOW', 'HIGH']).T
-    
-
-
-"""
-Just as a future reference, some links where I can consult important stuff.
-
-USDA data download
-https://fdc.nal.usda.gov/download-datasets.html
-
-National Institutes of Health. (info on Reference Intakes)
-https://www.ncbi.nlm.nih.gov/books/NBK545442/
-"""
-#%%
-
-objective_function = lambda amounts: (amounts>0.1).sum()
-
-high_cons = [{'type': 'ineq', 'fun': lambda x: limits['LOW'][i] - filtered[i].dot(x)} for i in filtered.iloc[:,2:]]
-low_cons = [{'type': 'ineq', 'fun':  lambda x: filtered[i].dot(x) - limits['HIGH'][i]} for i in filtered.iloc[:,2:]]
-cons = high_cons.append(low_cons)
-
-results = minimize(objective_function, amounts,  constraints= cons, bounds=[(0,10) for i in range(len(item_list))])
-
-results_df = pd.DataFrame(results.x, index=item_list)
-print(calculate_nutrient_scores(results.x))
-
 
 #%%
 
-# from pymoo.algorithms.soo.nonconvex.pso import PSO
-# from pymoo.problems.single import Rastrigin
-# from pymoo.optimize import minimize
+X = df_usda.fillna(0).iloc[:,2:].drop(columns='Water(G)')
 
-# problem = Rastrigin()
+db = DBSCAN(eps=0.001, min_samples=5, metric='cosine', n_jobs=-1).fit(X)
+# db = DBSCAN(eps=10, min_samples=2, metric='euclidean', n_jobs=-1).fit(X)
+labels = db.labels_
+# Number of clusters in labels, ignoring noise if present.
+n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
+n_noise_ = list(labels).count(-1)
 
-# algorithm = PSO()
+print("Estimated number of clusters: %d" % n_clusters_)
+print("Estimated number of noise points: %d" % n_noise_)
 
-# res = minimize(problem,
-#                algorithm,
-#                seed=1,
-#                verbose=False)
+unique_labels = set(labels)
+core_samples_mask = np.zeros_like(labels, dtype=bool)
+core_samples_mask[db.core_sample_indices_] = True
+
+colors = [plt.cm.Spectral(each) for each in np.linspace(0, 1, len(unique_labels))]
+for k, col in zip(unique_labels, colors):
+    if k == -1:
+        # Black used for noise.
+        col = [0, 0, 0, 1]
+
+    class_member_mask = labels == k
+
+    xy = X[class_member_mask & core_samples_mask]
+    plt.plot(
+        xy['Total lipid (fat)(G)'],
+        xy['Energy(KCAL)'],
+        "o",
+        markerfacecolor=tuple(col),
+        markeredgecolor="k",
+        markersize=14,
+    )
+
+    xy = X[class_member_mask & ~core_samples_mask]
+    plt.plot(
+        xy['Total lipid (fat)(G)'],
+        xy['Energy(KCAL)'],
+        "o",
+        markerfacecolor=tuple(col),
+        markeredgecolor="k",
+        markersize=6,
+    )
+
+plt.title(f"Estimated number of clusters: {n_clusters_}")
+plt.show()
+
+df_labeled = df_usda[columns_of_interest].join(pd.DataFrame(labels))
+
+#%% 
+
