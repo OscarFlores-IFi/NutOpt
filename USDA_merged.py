@@ -24,7 +24,7 @@ directory = r'C:\Users\52331\Documents\GitHub\NutOpt\\'
 
 #%% Fetch data
 
-df_usda = pd.read_csv(directory + 'FINAL_USDA_MERGED_SR_LEGACY.csv')
+df_usda = pd.read_csv(directory + 'FINAL_USDA_MERGED_SR_LEGACY.csv').fillna(0)
 
 #%% Getting information of the entries that contain the food item we want.
 keyword = 'salmon'
@@ -237,22 +237,22 @@ item_list = [
     7461, # De aqui empiezan los 'opcionales'
     ]
 
-filtered = df_usda[columns_of_interest].loc[item_list].fillna(0)
+filtered = df_usda[columns_of_interest].loc[item_list]
 filtered.to_csv(directory + 'SMALL_DATASET.csv')
 
 #%% Function to calculate Nutrient scores.
 
-def calculate_nutrient_scores(food_quantities):
+def calculate_nutrient_scores(food_nutrient_facts, food_quantities):
     # Your nutrient scoring function
     # This function should take food quantities as input and return nutrient scores
     # Replace this with your actual nutrient scoring logic
-    nutrient_scores = (food_quantities.T.dot(filtered.iloc[:,2:]))
+    nutrient_scores = (food_quantities.T.dot(food_nutrient_facts.iloc[:,2:]))
     return nutrient_scores
 
 
 #%% Limits
 
-CD=1800
+CD=2550
 
 limits = pd.DataFrame({
     'Protein(G)':[CD*0.10/4,CD*0.35/4],
@@ -278,32 +278,60 @@ inequality_vars = [i for i in columns_of_interest if i not in ['CATEGORY','FOOD_
 
 #%% Solving LP 
 
-# Minimization of objective Function
-obj = -np.ones(filtered.shape[0]) - filtered['Protein(G)'].values
+def optimize_food_consumption(food_nutrient_facts, limits):
+    """
+    Parameters
+    ----------
+    food_nutrient_facts : pd.DataFrame
+        Contains information of at least, each of the variables of interest, 
+        for each food. In the Rows we expect the food, as a column the nutrient.
+        
+    limits : pd.DataFrame
+        As many rows as Nutrient limits we have. Two columns, one for the 
+        high limit, one for the low limit. 
 
-# Inequalities. Lhs smaller or equal than Rhs.
-lhs_ineq1 = filtered[inequality_vars].T.values # Smaller than
-lhs_ineq2 = -filtered[inequality_vars].T.values # Bigger than
-rhs_ineq1 = limits.loc[inequality_vars]['HIGH'].values
-rhs_ineq2 = -limits.loc[inequality_vars]['LOW'].values
+    Returns
+    -------
+    np.array
+        with information on the optimal allocation of each food to satisfy the 
+        defined constraints.
 
-lhs_ineq = np.concatenate((lhs_ineq1, lhs_ineq2))
-rhs_ineq = np.concatenate((rhs_ineq1, rhs_ineq2))
+    """
+    
+    # Minimization of objective Function
+    obj = -np.ones(food_nutrient_facts.shape[0]) - food_nutrient_facts['Protein(G)'].values
+    
+    # Inequalities. Lhs smaller or equal than Rhs.
+    lhs_ineq1 = food_nutrient_facts[inequality_vars].T.values # Smaller than
+    lhs_ineq2 = -food_nutrient_facts[inequality_vars].T.values # Bigger than
+    rhs_ineq1 = limits.loc[inequality_vars]['HIGH'].values
+    rhs_ineq2 = -limits.loc[inequality_vars]['LOW'].values
+    
+    lhs_ineq = np.concatenate((lhs_ineq1, lhs_ineq2))
+    rhs_ineq = np.concatenate((rhs_ineq1, rhs_ineq2))
+    
+    # Equalities. Only for Calorie consumption. 
+    lhs_eq = food_nutrient_facts['Energy(KCAL)'].values.reshape((1,food_nutrient_facts.shape[0]))
+    rhs_eq = [CD]
+    
+    # Boundaries. Maximum 300 grams of any given product per day.
+    bnd = [(0,3) for i in range(food_nutrient_facts.shape[0])]
+    
+    opt = linprog(c=obj, A_ub=lhs_ineq, b_ub=rhs_ineq,
+                  A_eq=lhs_eq, b_eq=rhs_eq, bounds=bnd,
+                  method="highs")
+    print(opt)
+    return opt.x
 
-# Equalities. Only for Calorie consumption. 
-lhs_eq = filtered['Energy(KCAL)'].values.reshape((1,filtered.shape[0]))
-rhs_eq = [CD]
+filtered['Solution'] = optimize_food_consumption(filtered, limits)
 
-# Boundaries. Maximum 300 grams of any given product per day.
-bnd = [(0,3) for i in range(filtered.shape[0])]
+calculate_nutrient_scores(filtered, filtered['Solution'])
 
-opt = linprog(c=obj, A_ub=lhs_ineq, b_ub=rhs_ineq,
-              A_eq=lhs_eq, b_eq=rhs_eq, bounds=bnd,
-              method="highs")
+# #%%
+# df_usda['Solution'] = optimize_food_consumption(df_usda, limits)
+# calculate_nutrient_scores(df_usda, df_usda['Solution'])
+# best_prods = df_usda[df_usda['Solution']>0.1]
 
-filtered['Solution'] = opt.x
-
-calculate_nutrient_scores(filtered['Solution'])
 #%% Classification Excercise. Many 'Similar products'
 
 # X = df_usda.fillna(0).iloc[:,2:].drop(columns='Water(G)')
