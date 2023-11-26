@@ -13,7 +13,8 @@ Analysis using only the processed file on foods.
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
-from sklearn.cluster import DBSCAN
+# from sklearn.cluster import DBSCAN
+from scipy.optimize import linprog
 # from pymoo.algorithms.soo.nonconvex.pso import PSO
 # from pymoo.problems.single import Rastrigin
 # from pymoo.optimize import minimize
@@ -204,9 +205,6 @@ item_list = [
     7573,
     7089,
     7347,
-    7337,
-    7326,
-    7328,
     7418,
     7282,
     7145,
@@ -242,10 +240,7 @@ item_list = [
 filtered = df_usda[columns_of_interest].loc[item_list].fillna(0)
 filtered.to_csv(directory + 'SMALL_DATASET.csv')
 
-#%% Setting a random amount of consumption to calculate the total for each nutrient
-
-# amounts = pd.DataFrame(np.random.randint(min_rand,max_rand,len(item_list)),index=filtered.index, columns = ['Amount']) # beautiful solution
-amounts = np.random.random(len(item_list)) # required format for optimizer. But does not look nice. 
+#%% Function to calculate Nutrient scores.
 
 def calculate_nutrient_scores(food_quantities):
     # Your nutrient scoring function
@@ -254,33 +249,61 @@ def calculate_nutrient_scores(food_quantities):
     nutrient_scores = (food_quantities.T.dot(filtered.iloc[:,2:]))
     return nutrient_scores
 
-print(calculate_nutrient_scores(amounts))
 
 #%% Limits
 
 CD=1800
 
-columns_of_interest = {
+limits = pd.DataFrame({
     'Protein(G)':[CD*0.10/4,CD*0.35/4],
     'Cholesterol(MG)':[0,300],
-    'Fiber, total dietary(G)':[25,np.inf],
+    'Fiber, total dietary(G)':[25,500],
     'Fatty acids, total trans(G)':[0,0.01*CD/9],
-    'Iron, Fe(MG)':[18,np.inf],
+    'Iron, Fe(MG)':[18,80],
     'Sodium, Na(MG)':[0,300],
     'Fatty acids, total saturated(G)':[CD*0.04/9,CD*0.06/9],
     'Carbohydrate, by difference(G)':[CD*0.45/4,CD*0.65/4],
-    'Energy(KCAL)':[CD*0.95, CD*1.05],
     'Water(G)':[0,2500],
     'Sugars, Total(G)':[0,50],
     'Vitamin A, IU(IU)':[CD,CD*3],
     'Vitamin C, total ascorbic acid(MG)':[CD/60,CD/30],
-    'Calcium, Ca(MG)':[1000,np.inf],
+    'Calcium, Ca(MG)':[1000,5000],
     'Fatty acids, total monounsaturated(G)':[CD*0.15/9,CD*0.20/9],
     'Fatty acids, total polyunsaturated(G)':[CD*0.05/9,CD*0.10/9],
-    'Thiamin(MG)':[0,np.inf],
+    'Thiamin(MG)':[0,10000],
     'Total lipid (fat)(G)':[0,CD*0.30/9],
-    }
+    }, index=['LOW', 'HIGH']).T
 
+inequality_vars = [i for i in columns_of_interest if i not in ['CATEGORY','FOOD_NAME','Energy(KCAL)']]
+
+#%% Solving LP 
+
+# Minimization of objective Function
+obj = -np.ones(filtered.shape[0]) - filtered['Protein(G)'].values
+
+# Inequalities. Lhs smaller or equal than Rhs.
+lhs_ineq1 = filtered[inequality_vars].T.values # Smaller than
+lhs_ineq2 = -filtered[inequality_vars].T.values # Bigger than
+rhs_ineq1 = limits.loc[inequality_vars]['HIGH'].values
+rhs_ineq2 = -limits.loc[inequality_vars]['LOW'].values
+
+lhs_ineq = np.concatenate((lhs_ineq1, lhs_ineq2))
+rhs_ineq = np.concatenate((rhs_ineq1, rhs_ineq2))
+
+# Equalities. Only for Calorie consumption. 
+lhs_eq = filtered['Energy(KCAL)'].values.reshape((1,filtered.shape[0]))
+rhs_eq = [CD]
+
+# Boundaries. Maximum 300 grams of any given product per day.
+bnd = [(0,3) for i in range(filtered.shape[0])]
+
+opt = linprog(c=obj, A_ub=lhs_ineq, b_ub=rhs_ineq,
+              A_eq=lhs_eq, b_eq=rhs_eq, bounds=bnd,
+              method="highs")
+
+filtered['Solution'] = opt.x
+
+calculate_nutrient_scores(filtered['Solution'])
 #%% Classification Excercise. Many 'Similar products'
 
 # X = df_usda.fillna(0).iloc[:,2:].drop(columns='Water(G)')
