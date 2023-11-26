@@ -53,7 +53,6 @@ columns_of_interest = [
     'Calcium, Ca(MG)',
     'Fatty acids, total monounsaturated(G)',
     'Fatty acids, total polyunsaturated(G)',
-    'Tocopherol, delta(MG)',
     'Thiamin(MG)',
     'Total lipid (fat)(G)',
     ]
@@ -241,6 +240,7 @@ item_list = [
     ]
 
 filtered = df_usda[columns_of_interest].loc[item_list].fillna(0)
+filtered.to_csv(directory + 'SMALL_DATASET.csv')
 
 #%% Setting a random amount of consumption to calculate the total for each nutrient
 
@@ -256,56 +256,81 @@ def calculate_nutrient_scores(food_quantities):
 
 print(calculate_nutrient_scores(amounts))
 
-#%%
+#%% Limits
 
-X = df_usda.fillna(0).iloc[:,2:].drop(columns='Water(G)')
+CD=1800
 
-db = DBSCAN(eps=0.001, min_samples=5, metric='cosine', n_jobs=-1).fit(X)
-# db = DBSCAN(eps=10, min_samples=2, metric='euclidean', n_jobs=-1).fit(X)
-labels = db.labels_
-# Number of clusters in labels, ignoring noise if present.
-n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
-n_noise_ = list(labels).count(-1)
+columns_of_interest = {
+    'Protein(G)':[CD*0.10/4,CD*0.35/4],
+    'Cholesterol(MG)':[0,300],
+    'Fiber, total dietary(G)':[25,np.inf],
+    'Fatty acids, total trans(G)':[0,0.01*CD/9],
+    'Iron, Fe(MG)':[18,np.inf],
+    'Sodium, Na(MG)':[0,300],
+    'Fatty acids, total saturated(G)':[CD*0.04/9,CD*0.06/9],
+    'Carbohydrate, by difference(G)':[CD*0.45/4,CD*0.65/4],
+    'Energy(KCAL)':[CD*0.95, CD*1.05],
+    'Water(G)':[0,2500],
+    'Sugars, Total(G)':[0,50],
+    'Vitamin A, IU(IU)':[CD,CD*3],
+    'Vitamin C, total ascorbic acid(MG)':[CD/60,CD/30],
+    'Calcium, Ca(MG)':[1000,np.inf],
+    'Fatty acids, total monounsaturated(G)':[CD*0.15/9,CD*0.20/9],
+    'Fatty acids, total polyunsaturated(G)':[CD*0.05/9,CD*0.10/9],
+    'Thiamin(MG)':[0,np.inf],
+    'Total lipid (fat)(G)':[0,CD*0.30/9],
+    }
 
-print("Estimated number of clusters: %d" % n_clusters_)
-print("Estimated number of noise points: %d" % n_noise_)
+#%% Classification Excercise. Many 'Similar products'
 
-unique_labels = set(labels)
-core_samples_mask = np.zeros_like(labels, dtype=bool)
-core_samples_mask[db.core_sample_indices_] = True
+# X = df_usda.fillna(0).iloc[:,2:].drop(columns='Water(G)')
 
-colors = [plt.cm.Spectral(each) for each in np.linspace(0, 1, len(unique_labels))]
-for k, col in zip(unique_labels, colors):
-    if k == -1:
-        # Black used for noise.
-        col = [0, 0, 0, 1]
+# db = DBSCAN(eps=0.001, min_samples=5, metric='cosine', n_jobs=-1).fit(X)
+# # db = DBSCAN(eps=10, min_samples=2, metric='euclidean', n_jobs=-1).fit(X)
+# labels = db.labels_
+# # Number of clusters in labels, ignoring noise if present.
+# n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
+# n_noise_ = list(labels).count(-1)
 
-    class_member_mask = labels == k
+# print("Estimated number of clusters: %d" % n_clusters_)
+# print("Estimated number of noise points: %d" % n_noise_)
 
-    xy = X[class_member_mask & core_samples_mask]
-    plt.plot(
-        xy['Total lipid (fat)(G)'],
-        xy['Energy(KCAL)'],
-        "o",
-        markerfacecolor=tuple(col),
-        markeredgecolor="k",
-        markersize=14,
-    )
+# unique_labels = set(labels)
+# core_samples_mask = np.zeros_like(labels, dtype=bool)
+# core_samples_mask[db.core_sample_indices_] = True
 
-    xy = X[class_member_mask & ~core_samples_mask]
-    plt.plot(
-        xy['Total lipid (fat)(G)'],
-        xy['Energy(KCAL)'],
-        "o",
-        markerfacecolor=tuple(col),
-        markeredgecolor="k",
-        markersize=6,
-    )
+# colors = [plt.cm.Spectral(each) for each in np.linspace(0, 1, len(unique_labels))]
+# for k, col in zip(unique_labels, colors):
+#     if k == -1:
+#         # Black used for noise.
+#         col = [0, 0, 0, 1]
 
-plt.title(f"Estimated number of clusters: {n_clusters_}")
-plt.show()
+#     class_member_mask = labels == k
 
-df_labeled = df_usda[columns_of_interest].join(pd.DataFrame(labels))
+#     xy = X[class_member_mask & core_samples_mask]
+#     plt.plot(
+#         xy['Total lipid (fat)(G)'],
+#         xy['Energy(KCAL)'],
+#         "o",
+#         markerfacecolor=tuple(col),
+#         markeredgecolor="k",
+#         markersize=14,
+#     )
+
+#     xy = X[class_member_mask & ~core_samples_mask]
+#     plt.plot(
+#         xy['Total lipid (fat)(G)'],
+#         xy['Energy(KCAL)'],
+#         "o",
+#         markerfacecolor=tuple(col),
+#         markeredgecolor="k",
+#         markersize=6,
+#     )
+
+# plt.title(f"Estimated number of clusters: {n_clusters_}")
+# plt.show()
+
+# df_labeled = df_usda[columns_of_interest].join(pd.DataFrame(labels))
 
 #%% 
 
