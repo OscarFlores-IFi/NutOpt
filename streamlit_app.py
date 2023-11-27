@@ -7,7 +7,7 @@ Created on Thu Nov 23 22:19:44 2023
 This is the draft that will later become a front end for the optimizer
 """
 import streamlit as st
-from scipy.optimize import linprog
+# from scipy.optimize import linprog
 
 # Example data
 foods = {
@@ -36,6 +36,8 @@ def get_bar_color(current_amount):
     else:
         return 'yellow'  # Change to a darker shade for amounts exceeding 100%
 
+
+
 # Streamlit app
 def main():
     st.title("Nutritional Optimization App")
@@ -48,35 +50,15 @@ def main():
         st.session_state.food_quantities = {}
 
     # User input for food quantities
-    st.session_state.food_quantities[selected_food] = st.slider(f"Quantity of {selected_food}", 0, 100, 0)
+    if selected_food in st.session_state.food_quantities:
+        st.session_state.food_quantities[selected_food] = st.slider(f"Quantity of {selected_food}", 0, 100, st.session_state.food_quantities[selected_food])
+    else:
+        st.session_state.food_quantities[selected_food] = st.slider(f"Quantity of {selected_food}", 0, 100, 0)
 
     # Display existing sliders
     st.subheader("Current Food Quantities:")
     for food, quantity in st.session_state.food_quantities.items():
         st.write(f"{food}: {quantity}")
-
-#     # Button to optimize
-#     if st.button("Optimize"):
-#         # Get the user-defined food quantities
-#         user_quantities = [food_quantities[food] for food in foods]
-
-#         # Get the user-defined nutrient limits
-#         user_limits = [nutrient_limits[nutrient] for nutrient in nutrient_constraints]
-
-#         # Optimize the diet
-#         cost, optimized_quantities = optimize_diet(user_quantities, user_limits)
-
-#         # Display results
-#         st.subheader("Optimization Results:")
-#         st.write(f"Total Cost: {cost:.2f}")
-#         st.write("Optimal Food Quantities:")
-#         for i, quantity in enumerate(optimized_quantities):
-#             st.write(f"{list(foods.keys())[i]}: {quantity}")
-
-# # Function to optimize the diet
-# def optimize_diet(user_quantities, user_limits):
-#     # Objective function coefficients (costs)
-#     c = [foods[food]['cost'] for food in foods]
 
     # Create or get the nutrient_limits dictionary from session state
     if 'nutrient_limits' not in st.session_state:
@@ -117,13 +99,23 @@ def main():
             unsafe_allow_html=True
         )            
 
+#     # Button to optimize
+#     if st.button("Optimize"):
+#         # Get the user-defined food quantities
+#         user_quantities = [food_quantities[food] for food in foods]
 
-        # # Display a vertical line indicating the current amount for each nutrient
-        # st.write(f"Current {nutrient} Amount:")
-        # current_amount = sum(foods[food][nutrient] * st.session_state.food_quantities.get(food, 0) for food in foods)
-        # st.line_chart({nutrient: [0, current_amount]})
+#         # Get the user-defined nutrient limits
+#         user_limits = [nutrient_limits[nutrient] for nutrient in nutrient_constraints]
 
+#         # Optimize the diet
+#         cost, optimized_quantities = optimize_diet(user_quantities, user_limits)
 
+#         # Display results
+#         st.subheader("Optimization Results:")
+#         st.write(f"Total Cost: {cost:.2f}")
+#         st.write("Optimal Food Quantities:")
+#         for i, quantity in enumerate(optimized_quantities):
+#             st.write(f"{list(foods.keys())[i]}: {quantity}")
 
     return None
 
