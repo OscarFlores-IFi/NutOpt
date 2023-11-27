@@ -63,48 +63,6 @@ def main():
 
 
 
-
-
-
-     # Multiselect for adding foods to favorites and disliked products
-    # Use previous state to update favorites and disliked
-    prev_favorites = st.session_state.get('favorites', [])
-    prev_disliked = st.session_state.get('disliked', [])
-
-    # Dynamically generate favorites and disliked options
-    all_foods = list(foods.keys())
-    favorites = st.multiselect("Add foods to favorites:", all_foods, default=prev_favorites)
-    disliked = st.multiselect("Add foods to disliked products:", all_foods, default=prev_disliked)
-
-    # Update favorites and disliked in session state
-    st.session_state.favorites = favorites
-    st.session_state.disliked = disliked
-
-      # Process favorites and disliked products
-    st.session_state.favorites = list(set(st.session_state.get('favorites', []) + favorites))
-    st.session_state.disliked = list(set(st.session_state.get('disliked', []) + disliked))
-
-    # Display existing food quantities, favorites, and disliked products
-    st.subheader("Current Food Quantities:")
-    for food, quantity in st.session_state.food_quantities.items():
-        st.write(f"{food}: {quantity}")
-
-    st.subheader("Favorites:")
-    favorites = st.session_state.get('favorites', [])
-    st.write(', '.join(favorites) if favorites else 'No favorites added.')
-
-    st.subheader("Disliked Products:")
-    disliked = st.session_state.get('disliked', [])
-    st.write(', '.join(disliked) if disliked else 'No disliked products added.')
-
-
-
-
-
-
-
-
-
     # Create or get the nutrient_limits dictionary from session state
     if 'nutrient_limits' not in st.session_state:
         st.session_state.nutrient_limits = {}
@@ -144,23 +102,23 @@ def main():
             unsafe_allow_html=True
         )            
 
-#     # Button to optimize
-#     if st.button("Optimize"):
-#         # Get the user-defined food quantities
-#         user_quantities = [food_quantities[food] for food in foods]
+    # # Button to optimize
+    # if st.button("Optimize"):
+    #     # Get the user-defined food quantities
+    #     user_quantities = [food_quantities[food] for food in foods]
 
-#         # Get the user-defined nutrient limits
-#         user_limits = [nutrient_limits[nutrient] for nutrient in nutrient_constraints]
+    #     # Get the user-defined nutrient limits
+    #     user_limits = [nutrient_limits[nutrient] for nutrient in nutrient_constraints]
 
-#         # Optimize the diet
-#         cost, optimized_quantities = optimize_diet(user_quantities, user_limits)
+    #     # Optimize the diet
+    #     cost, optimized_quantities = optimize_diet(user_quantities, user_limits)
 
-#         # Display results
-#         st.subheader("Optimization Results:")
-#         st.write(f"Total Cost: {cost:.2f}")
-#         st.write("Optimal Food Quantities:")
-#         for i, quantity in enumerate(optimized_quantities):
-#             st.write(f"{list(foods.keys())[i]}: {quantity}")
+    #     # Display results
+    #     st.subheader("Optimization Results:")
+    #     st.write(f"Total Cost: {cost:.2f}")
+    #     st.write("Optimal Food Quantities:")
+    #     for i, quantity in enumerate(optimized_quantities):
+    #         st.write(f"{list(foods.keys())[i]}: {quantity}")
 
     return None
 
