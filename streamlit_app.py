@@ -27,7 +27,7 @@ nutrient_constraints = {
 def calculate_current_amount(nutrient):
     min_limit, max_limit = st.session_state.nutrient_limits[nutrient]
     current_value = sum(foods[food][nutrient] * st.session_state.food_quantities.get(food, 0) for food in foods)
-    percentage = ((current_value - min_limit) / (max_limit - min_limit)) * 100
+    percentage = ((current_value) / (max_limit)) * 100
     return percentage
 
 # Streamlit app
@@ -79,35 +79,37 @@ def main():
     # Sliders for nutrient limits
     st.subheader("Set Nutrient Limits:")
     for nutrient, limits in nutrient_constraints.items():
-        st.session_state.nutrient_limits[nutrient] = st.slider(f"Set {nutrient} limit", limits['min'], limits['max'], (limits['min'], limits['max']))
+        st.session_state.nutrient_limits[nutrient] = st.slider(f"Set {nutrient} limit", 0, limits['max'], (limits['min'], limits['max']))
 
-
-        # Display a green line above the slider indicating the current amount for each nutrient
         current_amount = calculate_current_amount(nutrient)
         st.markdown(
-             f"""
-             <style>
-                 #slider-container-{nutrient} {{
-                     position: relative;
-                 }}
-                 #slider-container-{nutrient}::before {{
-                     content: "";
-                     position: absolute;
-                     top: 0;
-                     left: 0;
-                     width: {current_amount}%;
-                     height: 100%;
-                     background-color: green;
-                     z-index: 1;
-                 }}
-             </style>
-             <div id="slider-container-{nutrient}">
-                 {st.slider(f"Slider for {nutrient}", 0, 100, 0, key=f"{nutrient}_slider")}
-             </div>
-             """,
-             unsafe_allow_html=True
-         )                            
-                                                
+            f"""
+            <style>
+                #progress-container-{nutrient} {{
+                    width: 100%;
+                    max-width: 100%;
+                    overflow: hidden;
+                }}
+                #progress-container-{nutrient} .stProgressBar div {{
+                    background-color: transparent !important;
+                    width: 0%;  /* Hide the default progress bar */
+                }}
+                #progress-container-{nutrient}::before {{
+                    content: "";
+                    display: block;
+                    width: {current_amount}%;  /* Ensure the width is within bounds */
+                    height: 10px;
+                    background-color: green;
+                }}
+            </style>
+            <div id="progress-container-{nutrient}">
+                <div class="stProgressBar">
+                    <div style="width: 0%;"></div>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )            
     # Display existing nutrient limits
     st.subheader("Current Nutrient Limits:")
     for nutrient, limits in st.session_state.nutrient_limits.items():
