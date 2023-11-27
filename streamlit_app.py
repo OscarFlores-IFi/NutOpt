@@ -30,6 +30,12 @@ def calculate_current_amount(nutrient):
     percentage = ((current_value) / (max_limit)) * 100
     return percentage
 
+def get_bar_color(current_amount):
+    if current_amount <= 100:
+        return 'green'
+    else:
+        return 'yellow'  # Change to a darker shade for amounts exceeding 100%
+
 # Streamlit app
 def main():
     st.title("Nutritional Optimization App")
@@ -98,8 +104,8 @@ def main():
                     content: "";
                     display: block;
                     width: {current_amount}%;  /* Ensure the width is within bounds */
-                    height: 10px;
-                    background-color: green;
+                    height: 5px;
+                    background-color:  {get_bar_color(current_amount)};;
                 }}
             </style>
             <div id="progress-container-{nutrient}">
