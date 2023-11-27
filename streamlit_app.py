@@ -110,17 +110,6 @@ def main():
             """,
             unsafe_allow_html=True
         )            
-    # Display existing nutrient limits
-    st.subheader("Current Nutrient Limits:")
-    for nutrient, limits in st.session_state.nutrient_limits.items():
-        st.write(f"{nutrient}: {limits[0]} to {limits[1]}")
-                                            
-           
-    # Display the sum of product * nutrient for each nutrient
-    for nutrient in nutrient_constraints:
-        st.subheader(f"Sum of {selected_food}'s {nutrient} Contribution:")
-        sum_product = calculate_current_amount(nutrient)
-        st.write(f"{sum_product:.2f}")
 
 
         # # Display a vertical line indicating the current amount for each nutrient
