@@ -60,6 +60,51 @@ def main():
     for food, quantity in st.session_state.food_quantities.items():
         st.write(f"{food}: {quantity}")
 
+
+
+
+
+
+
+     # Multiselect for adding foods to favorites and disliked products
+    # Use previous state to update favorites and disliked
+    prev_favorites = st.session_state.get('favorites', [])
+    prev_disliked = st.session_state.get('disliked', [])
+
+    # Dynamically generate favorites and disliked options
+    all_foods = list(foods.keys())
+    favorites = st.multiselect("Add foods to favorites:", all_foods, default=prev_favorites)
+    disliked = st.multiselect("Add foods to disliked products:", all_foods, default=prev_disliked)
+
+    # Update favorites and disliked in session state
+    st.session_state.favorites = favorites
+    st.session_state.disliked = disliked
+
+      # Process favorites and disliked products
+    st.session_state.favorites = list(set(st.session_state.get('favorites', []) + favorites))
+    st.session_state.disliked = list(set(st.session_state.get('disliked', []) + disliked))
+
+    # Display existing food quantities, favorites, and disliked products
+    st.subheader("Current Food Quantities:")
+    for food, quantity in st.session_state.food_quantities.items():
+        st.write(f"{food}: {quantity}")
+
+    st.subheader("Favorites:")
+    favorites = st.session_state.get('favorites', [])
+    st.write(', '.join(favorites) if favorites else 'No favorites added.')
+
+    st.subheader("Disliked Products:")
+    disliked = st.session_state.get('disliked', [])
+    st.write(', '.join(disliked) if disliked else 'No disliked products added.')
+
+
+
+
+
+
+
+
+
     # Create or get the nutrient_limits dictionary from session state
     if 'nutrient_limits' not in st.session_state:
         st.session_state.nutrient_limits = {}
@@ -86,7 +131,7 @@ def main():
                     content: "";
                     display: block;
                     width: {current_amount}%;  /* Ensure the width is within bounds */
-                    height: 5px;
+                    height: 3px;
                     background-color:  {get_bar_color(current_amount)};;
                 }}
             </style>
