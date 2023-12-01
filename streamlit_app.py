@@ -7,6 +7,7 @@ Created on Thu Nov 23 22:19:44 2023
 This is the draft that will later become a front end for the optimizer
 """
 import streamlit as st
+import json
 # from scipy.optimize import linprog
 
 # Example data
@@ -16,6 +17,11 @@ foods = {
     'food3': {'protein': 5, 'carbs': 30, 'fat': 8, 'cost': 1},
 }
 
+# with open("food_nutrients.json", "w") as file:
+#     json.dump(food_dict, file)
+with open('food_nutrients.json', 'r') as file:
+    foods = json.load(file)
+    
 # Nutritional constraints
 nutrient_constraints = {
     'protein': {'min': 30, 'max': 500},

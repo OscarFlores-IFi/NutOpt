@@ -11,6 +11,7 @@ Analysis using only the processed file on foods.
 
 # from scipy.optimize import minimize
 # import matplotlib.pyplot as plt
+import json
 import pandas as pd
 import numpy as np
 # from sklearn.cluster import DBSCAN
@@ -240,6 +241,25 @@ item_list = [
 filtered = df_usda[columns_of_interest].loc[item_list]
 filtered.to_csv(directory + 'SMALL_DATASET.csv')
 
+#%% Transform data into the shape required in the streamlit app
+
+# Format:
+# foods = {
+#     'food1': {'protein': 10, 'carbs': 20, 'fat': 5, 'cost': 2},
+#     'food2': {'protein': 15, 'carbs': 10, 'fat': 3, 'cost': 3},
+#     'food3': {'protein': 5, 'carbs': 30, 'fat': 8, 'cost': 1},
+# }
+
+food_dict = {}
+for food in filtered['FOOD_NAME'].unique():
+    tmp = {}
+    for nutrient in columns_of_interest[2:]:
+        tmp[nutrient] = filtered[filtered['FOOD_NAME'] == food][nutrient].values[0]
+    food_dict[food] = tmp
+
+with open("food_nutrients.json", "w") as file:
+    json.dump(food_dict, file)
+    
 #%% Function to calculate Nutrient scores.
 
 def calculate_nutrient_scores(food_nutrient_facts, food_quantities):
@@ -247,9 +267,8 @@ def calculate_nutrient_scores(food_nutrient_facts, food_quantities):
     # This function should take food quantities as input and return nutrient scores
     # Replace this with your actual nutrient scoring logic
     nutrient_scores = (food_quantities.T.dot(food_nutrient_facts.iloc[:,2:]))
-    return nutrient_scores
-
-
+    return nutrient_scores   
+    
 #%% Limits
 
 CD=2550
