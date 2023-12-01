@@ -22,9 +22,17 @@ with open("nutrition_constraints.json", "r") as file:
 
 #%% Define functions
 
+# Function to replace spaces and commas with underscores
+def replace_spaces_and_commas_with_underscores(text):
+    return text.replace(" ", "_").replace(",", "_")
+
+# Function to replace underscores with spaces
+def replace_underscores_with_spaces(text):
+    return text.replace("_", " ")
+
 # Function to calculate the current nutrient amount based on user-defined food quantities
-def calculate_current_amount(nutrient):
-    min_limit, max_limit = st.session_state.nutrient_limits[nutrient]
+def calculate_current_amount(nutrient, identifier):
+    min_limit, max_limit = st.session_state.nutrient_limits[identifier]    
     current_value = sum(foods[food][nutrient] * st.session_state.food_quantities.get(food, 0) for food in foods)
     percentage = ((current_value) / (max_limit)) * 100
     return percentage
@@ -66,25 +74,27 @@ def main():
     if 'nutrient_limits' not in st.session_state:
         st.session_state.nutrient_limits = {}
 
+
     # Sliders for nutrient limits
     st.subheader("Set Nutrient Limits:")
     for nutrient, limits in nutrient_constraints.items():
-        st.session_state.nutrient_limits[nutrient] = st.slider(f"Set {nutrient} limit", 0, int(limits['max']*1.3), (int(limits['min']), int(limits['max'])))
-
-        current_amount = calculate_current_amount(nutrient)
+        identifier = replace_spaces_and_commas_with_underscores(nutrient)
+        st.session_state.nutrient_limits[identifier] = st.slider(f"Set {nutrient} limit", 0, int(limits['max']*1.3), (int(limits['min']), int(limits['max'])))
+   
+        current_amount = calculate_current_amount(nutrient, identifier)
         st.markdown(
             f"""
             <style>
-                #progress-container-{nutrient} {{
+                #progress-container-{identifier} {{
                     width: 100%;
                     max-width: 100%;
                     overflow: hidden;
                 }}
-                #progress-container-{nutrient} .stProgressBar div {{
+                #progress-container-{identifier} .stProgressBar div {{
                     background-color: transparent !important;
                     width: 0%;  /* Hide the default progress bar */
                 }}
-                #progress-container-{nutrient}::before {{
+                #progress-container-{identifier}::before {{
                     content: "";
                     display: block;
                     width: {current_amount}%;  /* Ensure the width is within bounds */
@@ -92,7 +102,7 @@ def main():
                     background-color:  {get_bar_color(current_amount)};;
                 }}
             </style>
-            <div id="progress-container-{nutrient}">
+            <div id="progress-container-{identifier}">
                 <div class="stProgressBar">
                     <div style="width: 0%;"></div>
                 </div>
