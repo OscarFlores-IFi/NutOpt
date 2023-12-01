@@ -34,8 +34,8 @@ def replace_underscores_with_spaces(text):
 def calculate_current_amount(nutrient, identifier):
     min_limit, max_limit = st.session_state.nutrient_limits[identifier]    
     current_value = sum(foods[food][nutrient] * st.session_state.food_quantities.get(food, 0) for food in foods)
-    percentage = ((current_value) / (max_limit)) * 100
-    return percentage
+    percentage = (current_value / max_limit) 
+    return min(percentage, 1)
 
 def get_bar_color(current_amount):
     if current_amount <= 100:
@@ -82,34 +82,16 @@ def main():
         st.session_state.nutrient_limits[identifier] = st.slider(f"Set {nutrient} limit", 0, int(limits['max']*1.3), (int(limits['min']), int(limits['max'])))
    
         current_amount = calculate_current_amount(nutrient, identifier)
-        st.markdown(
-            f"""
-            <style>
-                #progress-container-{identifier} {{
-                    width: 100%;
-                    max-width: 100%;
-                    overflow: hidden;
-                }}
-                #progress-container-{identifier} .stProgressBar div {{
-                    background-color: transparent !important;
-                    width: 0%;  /* Hide the default progress bar */
-                }}
-                #progress-container-{identifier}::before {{
-                    content: "";
-                    display: block;
-                    width: {current_amount}%;  /* Ensure the width is within bounds */
-                    height: 3px;
-                    background-color:  {get_bar_color(current_amount)};;
-                }}
-            </style>
-            <div id="progress-container-{identifier}">
-                <div class="stProgressBar">
-                    <div style="width: 0%;"></div>
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )            
+
+        # Debugging statements
+        st.write(f"Nutrient: {nutrient}")
+        st.write(f"Identifier: {identifier}")
+        st.write(f"Current Amount: {current_amount}")
+        st.write(f"Bar Color: {get_bar_color(current_amount)}")
+
+
+        # Use st.progress for the progress bar
+        st.progress(current_amount)           
 
     # # Button to optimize
     # if st.button("Optimize"):
