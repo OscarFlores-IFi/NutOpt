@@ -10,24 +10,17 @@ import streamlit as st
 import json
 # from scipy.optimize import linprog
 
-# Example data
-foods = {
-    'food1': {'protein': 10, 'carbs': 20, 'fat': 5, 'cost': 2},
-    'food2': {'protein': 15, 'carbs': 10, 'fat': 3, 'cost': 3},
-    'food3': {'protein': 5, 'carbs': 30, 'fat': 8, 'cost': 1},
-}
+#%% Read files
 
-# with open("food_nutrients.json", "w") as file:
-#     json.dump(food_dict, file)
+# Food nutritional facts
 with open('food_nutrients.json', 'r') as file:
     foods = json.load(file)
     
 # Nutritional constraints
-nutrient_constraints = {
-    'protein': {'min': 30, 'max': 500},
-    'carbs': {'min': 40, 'max': 600},
-    'fat': {'min': 10, 'max': 200},
-}
+with open("nutrition_constraints.json", "r") as file:
+    nutrient_constraints = json.load(file)
+
+#%% Define functions
 
 # Function to calculate the current nutrient amount based on user-defined food quantities
 def calculate_current_amount(nutrient):
@@ -44,7 +37,7 @@ def get_bar_color(current_amount):
 
 
 
-# Streamlit app
+#%% Streamlit app
 def main():
     st.title("Nutritional Optimization App")
 
@@ -76,7 +69,7 @@ def main():
     # Sliders for nutrient limits
     st.subheader("Set Nutrient Limits:")
     for nutrient, limits in nutrient_constraints.items():
-        st.session_state.nutrient_limits[nutrient] = st.slider(f"Set {nutrient} limit", 0, limits['max'], (limits['min'], limits['max']))
+        st.session_state.nutrient_limits[nutrient] = st.slider(f"Set {nutrient} limit", 0, int(limits['max']*1.3), (int(limits['min']), int(limits['max'])))
 
         current_amount = calculate_current_amount(nutrient)
         st.markdown(

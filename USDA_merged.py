@@ -271,7 +271,7 @@ def calculate_nutrient_scores(food_nutrient_facts, food_quantities):
     
 #%% Limits
 
-CD=2550
+CD=2200
 
 limits = pd.DataFrame({
     'Protein(G)':[CD*0.10/4,CD*0.35/4],
@@ -291,9 +291,46 @@ limits = pd.DataFrame({
     'Fatty acids, total polyunsaturated(G)':[CD*0.05/9,CD*0.10/9],
     'Thiamin(MG)':[0,10000],
     'Total lipid (fat)(G)':[0,CD*0.30/9],
-    }, index=['LOW', 'HIGH']).T
+    }, index=['min', 'max']).T
 
 inequality_vars = [i for i in columns_of_interest if i not in ['CATEGORY','FOOD_NAME','Energy(KCAL)']]
+
+#%% Limits
+
+CD=2200
+
+# We need a format as:
+# nutrient_constraints = {
+#     'protein': {'min': 30, 'max': 500},
+#     'carbs': {'min': 40, 'max': 600},
+#     'fat': {'min': 10, 'max': 200},
+# }
+
+
+limits2 = {
+    'Protein(G)':{'min':CD*0.10/4,'max':CD*0.35/4},
+    'Cholesterol(MG)':{'min':0,'max':300},
+    'Fiber, total dietary(G)':{'min':25,'max':500},
+    'Fatty acids, total trans(G)':{'min':0,'max':0.01*CD/9},
+    'Iron, Fe(MG)':{'min':18,'max':80},
+    'Sodium, Na(MG)':{'min':0,'max':300},
+    'Fatty acids, total saturated(G)':{'min':CD*0.04/9,'max':CD*0.06/9},
+    'Carbohydrate, by difference(G)':{'min':CD*0.45/4,'max':CD*0.65/4},
+    'Water(G)':{'min':0,'max':2500},
+    'Sugars, Total(G)':{'min':0,'max':50},
+    'Vitamin A, IU(IU)':{'min':CD,'max':CD*3},
+    'Vitamin C, total ascorbic acid(MG)':{'min':CD/60,'max':CD/30},
+    'Calcium, Ca(MG)':{'min':1000,'max':5000},
+    'Fatty acids, total monounsaturated(G)':{'min':CD*0.15/9,'max':CD*0.20/9},
+    'Fatty acids, total polyunsaturated(G)':{'min':CD*0.05/9,'max':CD*0.10/9},
+    'Thiamin(MG)':{'min':0,'max':10000},
+    'Total lipid (fat)(G)':{'min':0,'max':CD*0.30/9},
+    }
+# To convert into the same format as limits:
+# limits2 = pd.DataFrame(limits2).T
+
+with open("nutrition_constraints.json", "w") as file:
+    json.dump(limits2, file)
 
 #%% Solving LP 
 
@@ -323,8 +360,8 @@ def optimize_food_consumption(food_nutrient_facts, limits):
     # Inequalities. Lhs smaller or equal than Rhs.
     lhs_ineq1 = food_nutrient_facts[inequality_vars].T.values # Smaller than
     lhs_ineq2 = -food_nutrient_facts[inequality_vars].T.values # Bigger than
-    rhs_ineq1 = limits.loc[inequality_vars]['HIGH'].values
-    rhs_ineq2 = -limits.loc[inequality_vars]['LOW'].values
+    rhs_ineq1 = limits.loc[inequality_vars]['max'].values
+    rhs_ineq2 = -limits.loc[inequality_vars]['min'].values
     
     lhs_ineq = np.concatenate((lhs_ineq1, lhs_ineq2))
     rhs_ineq = np.concatenate((rhs_ineq1, rhs_ineq2))
