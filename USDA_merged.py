@@ -366,6 +366,9 @@ def optimize_food_consumption(food_nutrient_facts, limits):
     lhs_ineq = np.concatenate((lhs_ineq1, lhs_ineq2))
     rhs_ineq = np.concatenate((rhs_ineq1, rhs_ineq2))
     
+    print(lhs_ineq)
+    print(rhs_ineq)
+    
     # Equalities. Only for Calorie consumption. 
     lhs_eq = food_nutrient_facts['Energy(KCAL)'].values.reshape((1,food_nutrient_facts.shape[0]))
     rhs_eq = [CD]

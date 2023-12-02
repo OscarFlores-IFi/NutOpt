@@ -8,7 +8,7 @@ This is the draft that will later become a front end for the optimizer
 """
 import streamlit as st
 import json
-# from scipy.optimize import linprog
+from scipy.optimize import linprog
 
 #%% Read files
 
@@ -48,6 +48,79 @@ def get_text_to_show(identifier, current_amount):
     else:
         return ":green[within limits]"
 
+def optimize_food_consumption(foods, selected_foods, nutrient_constraints):
+    """
+    Parameters
+    ----------
+    food_nutrient_facts : pd.DataFrame
+        Contains information of at least, each of the variables of interest, 
+        for each food. In the Rows we expect the food, as a column the nutrient.
+        
+    limits : pd.DataFrame
+        As many rows as Nutrient limits we have. Two columns, one for the 
+        high limit, one for the low limit. 
+
+    Returns
+    -------
+    np.array
+        with information on the optimal allocation of each food to satisfy the 
+        defined constraints.
+
+    """
+    
+
+    
+    lhs_ineq = []
+    rhs_ineq = []
+    list_of_foods = []
+    
+    for nutrient, limits in nutrient_constraints.items():
+        not_selected_foods_vector = []
+        cont = 0
+        for food in foods:
+            if food not in st.session_state.food_quantities:
+                not_selected_foods_vector.append(foods[food][nutrient])
+                if cont == 0:
+                    list_of_foods.append(food)
+        
+        lhs_ineq.append(not_selected_foods_vector)
+        lhs_ineq.append([-i for i in not_selected_foods_vector])
+        
+        current_amount, _ = calculate_current_amount(nutrient)
+        
+        rhs_ineq.append(limits['max']-current_amount)
+        rhs_ineq.append(current_amount - limits['min'])
+        
+    # Minimization of objective Function
+    obj = [-1]* len(lhs_ineq[0])
+    
+    # # Inequalities. Lhs smaller or equal than Rhs.
+    # lhs_ineq1 = food_nutrient_facts[inequality_vars].T.values # Smaller than
+    # lhs_ineq2 = -food_nutrient_facts[inequality_vars].T.values # Bigger than
+    # rhs_ineq1 = limits.loc[inequality_vars]['max'].values
+    # rhs_ineq2 = -limits.loc[inequality_vars]['min'].values
+    
+    # lhs_ineq = np.concatenate((lhs_ineq1, lhs_ineq2))
+    # rhs_ineq = np.concatenate((rhs_ineq1, rhs_ineq2))
+    
+    # # Equalities. Only for Calorie consumption. 
+    # lhs_eq = food_nutrient_facts['Energy(KCAL)'].values.reshape((1,food_nutrient_facts.shape[0]))
+    # rhs_eq = [CD]
+    
+    # Boundaries. Maximum 300 grams of any given product per day.
+    bnd = [(0,300)]*len(lhs_ineq[0])
+    
+    opt = linprog(c=obj, 
+                  A_ub=lhs_ineq, 
+                  b_ub=rhs_ineq,
+                  bounds=bnd,
+                  method="highs")
+    
+    print(opt.x.dtype)
+    
+    opt.x
+    # return opt.x
+    pass
 
 
 #%% Streamlit app
@@ -101,7 +174,8 @@ def main():
         st.write(f"{nutrient}: {limits}")
 
     # # Button to optimize
-    # if st.button("Optimize"):
+    if st.button("Optimize"):
+        optimize_food_consumption(foods, st.session_state.food_quantities, nutrient_constraints)
     #     # Get the user-defined food quantities
     #     user_quantities = [food_quantities[food] for food in foods]
 
@@ -118,58 +192,12 @@ def main():
     #     for i, quantity in enumerate(optimized_quantities):
     #         st.write(f"{list(foods.keys())[i]}: {quantity}")
 
-    return None
+    # return None
 
 if __name__ == "__main__":
     main()
     
     
-#%% Solving LP 
-
-def optimize_food_consumption(food_nutrient_facts, limits):
-    """
-    Parameters
-    ----------
-    food_nutrient_facts : pd.DataFrame
-        Contains information of at least, each of the variables of interest, 
-        for each food. In the Rows we expect the food, as a column the nutrient.
-        
-    limits : pd.DataFrame
-        As many rows as Nutrient limits we have. Two columns, one for the 
-        high limit, one for the low limit. 
-
-    Returns
-    -------
-    np.array
-        with information on the optimal allocation of each food to satisfy the 
-        defined constraints.
-
-    """
-    
-    # Minimization of objective Function
-    obj = -np.ones(food_nutrient_facts.shape[0])
-    
-    # Inequalities. Lhs smaller or equal than Rhs.
-    lhs_ineq1 = food_nutrient_facts[inequality_vars].T.values # Smaller than
-    lhs_ineq2 = -food_nutrient_facts[inequality_vars].T.values # Bigger than
-    rhs_ineq1 = limits.loc[inequality_vars]['max'].values
-    rhs_ineq2 = -limits.loc[inequality_vars]['min'].values
-    
-    lhs_ineq = np.concatenate((lhs_ineq1, lhs_ineq2))
-    rhs_ineq = np.concatenate((rhs_ineq1, rhs_ineq2))
-    
-    # Equalities. Only for Calorie consumption. 
-    lhs_eq = food_nutrient_facts['Energy(KCAL)'].values.reshape((1,food_nutrient_facts.shape[0]))
-    rhs_eq = [CD]
-    
-    # Boundaries. Maximum 300 grams of any given product per day.
-    bnd = [(0,3) for i in range(food_nutrient_facts.shape[0])]
-    
-    opt = linprog(c=obj, A_ub=lhs_ineq, b_ub=rhs_ineq,
-                  A_eq=lhs_eq, b_eq=rhs_eq, bounds=bnd,
-                  method="highs")
-    print(opt)
-    return opt.x
 
 # filtered['Solution'] = optimize_food_consumption(filtered, limits)
 
