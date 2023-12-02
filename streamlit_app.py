@@ -58,9 +58,9 @@ def main():
 
     # User input for food quantities
     if selected_food in st.session_state.food_quantities:
-        st.session_state.food_quantities[selected_food] = st.slider(f"Quantity of {selected_food}", 0, 100, st.session_state.food_quantities[selected_food])
+        st.session_state.food_quantities[selected_food] = st.slider(f"Quantity of {selected_food}", 0, 200, st.session_state.food_quantities[selected_food])
     else:
-        st.session_state.food_quantities[selected_food] = st.slider(f"Quantity of {selected_food}", 0, 100, 0)
+        st.session_state.food_quantities[selected_food] = st.slider(f"Quantity of {selected_food}", 0, 200, 0)
 
     # Display existing sliders
     st.subheader("Current Food Quantities:")

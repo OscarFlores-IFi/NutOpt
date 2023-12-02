@@ -254,7 +254,7 @@ food_dict = {}
 for food in filtered['FOOD_NAME'].unique():
     tmp = {}
     for nutrient in columns_of_interest[2:]:
-        tmp[nutrient] = filtered[filtered['FOOD_NAME'] == food][nutrient].values[0]
+        tmp[nutrient] = filtered[filtered['FOOD_NAME'] == food][nutrient].values[0]/100
     food_dict[food] = tmp
 
 with open("food_nutrients.json", "w") as file:
