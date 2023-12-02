@@ -85,7 +85,7 @@ def optimize_food_consumption(foods, selected_foods, nutrient_constraints):
     
     print({i:j for i,j in zip(list_of_foods,opt.x) if j >0})
     
-    return {i:j for i,j in zip(list_of_foods,opt.x) if j >0}
+    return ({i:int(j) for i,j in zip(list_of_foods,opt.x) if j >0})
 
 
 #%% Streamlit app
@@ -110,13 +110,9 @@ def main():
     for food, quantity in st.session_state.food_quantities.items():
         st.write(f"{food}: {quantity}")
 
-
-
-
     # Create or get the nutrient_limits dictionary from session state
     if 'nutrient_limits' not in st.session_state:
         st.session_state.nutrient_limits = {}
-
 
     # Sliders for nutrient limits
     st.subheader("Nutrient Limits:")
@@ -128,16 +124,17 @@ def main():
                                                                  (int(limits['min']), int(limits['max'])))
    
         current_amount, percentage_of_max_lim = calculate_current_amount(nutrient)
-        
         text_to_show = get_text_to_show(identifier, current_amount)
         
         # Use st.progress for the progress bar
         st.progress(int(percentage_of_max_lim*100), text=text_to_show)    
 
-    # # Button to optimize
+    # Button to optimize
     if st.button("Optimize"):
-        optimize_food_consumption(foods, st.session_state.food_quantities, nutrient_constraints)
+        new_items = optimize_food_consumption(foods, st.session_state.food_quantities, nutrient_constraints)
 
+        for new_food, new_quantity in new_items.items(): 
+            st.session_state.food_quantities[new_food] = new_quantity
 
 if __name__ == "__main__":
     main()
