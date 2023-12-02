@@ -49,27 +49,7 @@ def get_text_to_show(identifier, current_amount):
         return ":green[within limits]"
 
 def optimize_food_consumption(foods, selected_foods, nutrient_constraints):
-    """
-    Parameters
-    ----------
-    food_nutrient_facts : pd.DataFrame
-        Contains information of at least, each of the variables of interest, 
-        for each food. In the Rows we expect the food, as a column the nutrient.
-        
-    limits : pd.DataFrame
-        As many rows as Nutrient limits we have. Two columns, one for the 
-        high limit, one for the low limit. 
-
-    Returns
-    -------
-    np.array
-        with information on the optimal allocation of each food to satisfy the 
-        defined constraints.
-
-    """
-    
-
-    
+  
     lhs_ineq = []
     rhs_ineq = []
     list_of_foods = []
@@ -93,22 +73,9 @@ def optimize_food_consumption(foods, selected_foods, nutrient_constraints):
         
     # Minimization of objective Function
     obj = [-1]* len(lhs_ineq[0])
-    
-    # # Inequalities. Lhs smaller or equal than Rhs.
-    # lhs_ineq1 = food_nutrient_facts[inequality_vars].T.values # Smaller than
-    # lhs_ineq2 = -food_nutrient_facts[inequality_vars].T.values # Bigger than
-    # rhs_ineq1 = limits.loc[inequality_vars]['max'].values
-    # rhs_ineq2 = -limits.loc[inequality_vars]['min'].values
-    
-    # lhs_ineq = np.concatenate((lhs_ineq1, lhs_ineq2))
-    # rhs_ineq = np.concatenate((rhs_ineq1, rhs_ineq2))
-    
-    # # Equalities. Only for Calorie consumption. 
-    # lhs_eq = food_nutrient_facts['Energy(KCAL)'].values.reshape((1,food_nutrient_facts.shape[0]))
-    # rhs_eq = [CD]
-    
+
     # Boundaries. Maximum 300 grams of any given product per day.
-    bnd = [(0,300)]*len(lhs_ineq[0])
+    bnd = [(0,200)]*len(lhs_ineq[0])
     
     opt = linprog(c=obj, 
                   A_ub=lhs_ineq, 
@@ -116,11 +83,9 @@ def optimize_food_consumption(foods, selected_foods, nutrient_constraints):
                   bounds=bnd,
                   method="highs")
     
-    print(opt.x.dtype)
+    print({i:j for i,j in zip(list_of_foods,opt.x) if j >0})
     
-    opt.x
-    # return opt.x
-    pass
+    return {i:j for i,j in zip(list_of_foods,opt.x) if j >0}
 
 
 #%% Streamlit app
@@ -169,39 +134,13 @@ def main():
         # Use st.progress for the progress bar
         st.progress(int(percentage_of_max_lim*100), text=text_to_show)    
 
-
-    for nutrient, limits in nutrient_constraints.items():
-        st.write(f"{nutrient}: {limits}")
-
     # # Button to optimize
     if st.button("Optimize"):
         optimize_food_consumption(foods, st.session_state.food_quantities, nutrient_constraints)
-    #     # Get the user-defined food quantities
-    #     user_quantities = [food_quantities[food] for food in foods]
 
-    #     # Get the user-defined nutrient limits
-    #     user_limits = [nutrient_limits[nutrient] for nutrient in nutrient_constraints]
-
-    #     # Optimize the diet
-    #     cost, optimized_quantities = optimize_diet(user_quantities, user_limits)
-
-    #     # Display results
-    #     st.subheader("Optimization Results:")
-    #     st.write(f"Total Cost: {cost:.2f}")
-    #     st.write("Optimal Food Quantities:")
-    #     for i, quantity in enumerate(optimized_quantities):
-    #         st.write(f"{list(foods.keys())[i]}: {quantity}")
-
-    # return None
 
 if __name__ == "__main__":
     main()
     
-    
-
-# filtered['Solution'] = optimize_food_consumption(filtered, limits)
-
-# calculate_nutrient_scores(filtered, filtered['Solution'])
-
 #%%
 # python -m streamlit run C:\Users\52331\Documents\GitHub\NutOpt\streamlit_app.py
