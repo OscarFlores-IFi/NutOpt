@@ -38,7 +38,7 @@ def calculate_current_amount(nutrient, identifier):
     return min(percentage, 1)
 
 def get_bar_color(current_amount):
-    if current_amount <= 100:
+    if current_amount < 1:
         return 'green'
     else:
         return 'yellow'  # Change to a darker shade for amounts exceeding 100%
@@ -83,15 +83,16 @@ def main():
    
         current_amount = calculate_current_amount(nutrient, identifier)
 
-        # Debugging statements
-        st.write(f"Nutrient: {nutrient}")
-        st.write(f"Identifier: {identifier}")
-        st.write(f"Current Amount: {current_amount}")
-        st.write(f"Bar Color: {get_bar_color(current_amount)}")
-
-
+        st.markdown("""
+        <style>
+        .stProgress .st-bo {
+            background-color: get_bar_color(current_amount);
+        }
+        </style>
+        """, unsafe_allow_html=True)
+        
         # Use st.progress for the progress bar
-        st.progress(current_amount)           
+        st.progress(int(current_amount*100))           
 
     # # Button to optimize
     # if st.button("Optimize"):
