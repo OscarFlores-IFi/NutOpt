@@ -10,15 +10,8 @@ import streamlit as st
 import json
 from scipy.optimize import linprog
 
-#%% Read files
+directory = r'C:\Users\52331\Documents\GitHub\NutOpt\\'
 
-# Food nutritional facts
-with open('food_nutrients.json', 'r') as file:
-    foods = json.load(file)
-    
-# Nutritional constraints
-with open("nutrition_constraints.json", "r") as file:
-    nutrient_constraints = json.load(file)
 
 #%% Define functions
 
@@ -31,12 +24,12 @@ def replace_underscores_with_spaces(text):
     return text.replace("_", " ")
 
 # Function to calculate the current nutrient amount based on user-defined food quantities
-def calculate_current_amount(nutrient):
+def calculate_current_amount(nutrient, foods, nutrient_constraints):
     current_value = sum(foods[food][nutrient] * st.session_state.food_quantities.get(food, 0) for food in foods)
     percentage = (current_value / (nutrient_constraints[nutrient]['max']*1.3))
     if percentage < 1:
-        return (current_value, percentage)
-    return (current_value, 100)
+        return (round(current_value), percentage)
+    return (round(current_value), 100)
 
 
 def get_text_to_show(identifier, current_amount):
@@ -66,7 +59,7 @@ def optimize_food_consumption(foods, selected_foods, nutrient_constraints):
         lhs_ineq.append(not_selected_foods_vector)
         lhs_ineq.append([-i for i in not_selected_foods_vector])
         
-        current_amount, _ = calculate_current_amount(nutrient)
+        current_amount, _ = calculate_current_amount(nutrient, foods, nutrient_constraints)
         
         rhs_ineq.append(limits['max']-current_amount)
         rhs_ineq.append(current_amount - limits['min'])
@@ -81,16 +74,36 @@ def optimize_food_consumption(foods, selected_foods, nutrient_constraints):
                   A_ub=lhs_ineq, 
                   b_ub=rhs_ineq,
                   bounds=bnd,
-                  method="highs")
-    
-    print({i:j for i,j in zip(list_of_foods,opt.x) if j >0})
-    
+                  method = 'highs',
+                  integrality=1)
+        
     return ({i:int(j) for i,j in zip(list_of_foods,opt.x) if j >0})
 
+@st.cache_resource
+def read_json(filename):
+    with open(filename, 'r') as file:
+        return json.load(file)
 
+#%% Read files
+
+# Food nutritional facts
+foods = read_json(directory + "food_nutrients.json")
+    
+# Nutritional constraints
+nutrient_constraints = read_json(directory + "nutrition_constraints.json")
+print(nutrient_constraints)
+
+    
 #%% Streamlit app
 def main():
     st.title("Nutritional Optimization App")
+
+
+    if st.button("Reset"):
+        del st.session_state.food_quantities
+        # Delete all the items in Session state
+        for key in st.session_state.keys():
+            del st.session_state[key]
 
     # Dropdown for selecting a food
     selected_food = st.selectbox("Select a food:", list(foods.keys()))
@@ -100,10 +113,22 @@ def main():
         st.session_state.food_quantities = {}
 
     # User input for food quantities
-    if selected_food in st.session_state.food_quantities:
-        st.session_state.food_quantities[selected_food] = st.slider(f"Quantity of {selected_food}", 0, 400, st.session_state.food_quantities[selected_food])
+    if selected_food in st.session_state.food_quantities:        
+        st.session_state.food_quantities[selected_food] = st.slider(f"Quantity of {selected_food} (g)", 0, 400, st.session_state.food_quantities[selected_food])
     else:
-        st.session_state.food_quantities[selected_food] = st.slider(f"Quantity of {selected_food}", 0, 400, 0)
+        st.session_state.food_quantities[selected_food] = st.slider(f"Quantity of {selected_food} (g)", 0, 400, 0)
+
+    # Button to optimize
+    if st.button("Optimize"):
+        try:
+            new_items = optimize_food_consumption(foods, st.session_state.food_quantities, nutrient_constraints)
+
+            for new_food, new_quantity in new_items.items(): 
+                st.session_state.food_quantities[new_food] = new_quantity
+        except:
+            st.write(":blue[Optimization not possible, please make sure all items are below boundaries.]")
+            
+
 
     # Display existing sliders
     st.subheader("Current Food Quantities:")
@@ -123,18 +148,16 @@ def main():
                                                                  int(limits['max']*1.3),                        \
                                                                  (int(limits['min']), int(limits['max'])))
    
-        current_amount, percentage_of_max_lim = calculate_current_amount(nutrient)
+        current_amount, percentage_of_max_lim = calculate_current_amount(nutrient, foods, nutrient_constraints)
         text_to_show = get_text_to_show(identifier, current_amount)
         
         # Use st.progress for the progress bar
-        st.progress(int(percentage_of_max_lim*100), text=text_to_show)    
+        st.progress(percentage_of_max_lim, text=text_to_show)    
 
-    # Button to optimize
-    if st.button("Optimize"):
-        new_items = optimize_food_consumption(foods, st.session_state.food_quantities, nutrient_constraints)
 
-        for new_food, new_quantity in new_items.items(): 
-            st.session_state.food_quantities[new_food] = new_quantity
+    for nutrient, limits in nutrient_constraints.items():
+        current_amount, _ = calculate_current_amount(nutrient, foods, nutrient_constraints)
+        st.write(f"{nutrient}: {current_amount}")
 
 if __name__ == "__main__":
     main()

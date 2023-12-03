@@ -7,19 +7,8 @@ Created on Thu Nov 23 13:30:57 2023
 Analysis using only the processed file on foods.
 """
 
-
-
-# from scipy.optimize import minimize
-# import matplotlib.pyplot as plt
 import json
 import pandas as pd
-import numpy as np
-# from sklearn.cluster import DBSCAN
-from scipy.optimize import linprog
-# from pymoo.algorithms.soo.nonconvex.pso import PSO
-# from pymoo.problems.single import Rastrigin
-# from pymoo.optimize import minimize
-
 
 directory = r'C:\Users\52331\Documents\GitHub\NutOpt\\'
 
@@ -28,35 +17,35 @@ directory = r'C:\Users\52331\Documents\GitHub\NutOpt\\'
 df_usda = pd.read_csv(directory + 'FINAL_USDA_MERGED_SR_LEGACY.csv').fillna(0)
 
 #%% Getting information of the entries that contain the food item we want.
-keyword = 'salmon'
+df_usda['FOOD_NAME'] = df_usda['FOOD_NAME'].str.replace("\(Includes foods for USDA\'s Food Distribution Program\)", "")
+keyword = 'includes'
 candidates = df_usda[df_usda['FOOD_NAME'].str.lower().str.contains(keyword.lower())]
 
 if candidates.shape[0]<10:
     print(candidates[['FOOD_NAME']])
-    
 #%% List of items we want:
 
 columns_of_interest = [
     'CATEGORY', 
     'FOOD_NAME',
+    'Energy(KCAL)',
     'Protein(G)',
-    'Cholesterol(MG)',
-    'Fiber, total dietary(G)',
+    'Carbohydrate, by difference(G)',
+    'Total lipid (fat)(G)',
+    'Fatty acids, total monounsaturated(G)',
+    'Fatty acids, total polyunsaturated(G)',
+    'Fatty acids, total saturated(G)',
     'Fatty acids, total trans(G)',
+    'Fiber, total dietary(G)',
+    'Cholesterol(MG)',
     'Iron, Fe(MG)',
     'Sodium, Na(MG)',
-    'Fatty acids, total saturated(G)',
-    'Carbohydrate, by difference(G)',
-    'Energy(KCAL)',
-    'Water(G)',
     'Sugars, Total(G)',
     'Vitamin A, IU(IU)',
     'Vitamin C, total ascorbic acid(MG)',
     'Calcium, Ca(MG)',
-    'Fatty acids, total monounsaturated(G)',
-    'Fatty acids, total polyunsaturated(G)',
     'Thiamin(MG)',
-    'Total lipid (fat)(G)',
+    'Water(G)',
     ]
     
 item_list = [
@@ -144,7 +133,6 @@ item_list = [
     798,
     808,
     2631,
-    2618,
     2611,
     6230,
     587,
@@ -260,45 +248,10 @@ for food in filtered['FOOD_NAME'].unique():
 with open("food_nutrients.json", "w") as file:
     json.dump(food_dict, file)
     
-#%% Function to calculate Nutrient scores.
-
-def calculate_nutrient_scores(food_nutrient_facts, food_quantities):
-    # Your nutrient scoring function
-    # This function should take food quantities as input and return nutrient scores
-    # Replace this with your actual nutrient scoring logic
-    nutrient_scores = (food_quantities.T.dot(food_nutrient_facts.iloc[:,2:]))
-    return nutrient_scores   
     
 #%% Limits
 
-CD=2200
-
-limits = pd.DataFrame({
-    'Protein(G)':[CD*0.10/4,CD*0.35/4],
-    'Cholesterol(MG)':[0,300],
-    'Fiber, total dietary(G)':[25,500],
-    'Fatty acids, total trans(G)':[0,0.01*CD/9],
-    'Iron, Fe(MG)':[18,80],
-    'Sodium, Na(MG)':[0,300],
-    'Fatty acids, total saturated(G)':[CD*0.04/9,CD*0.06/9],
-    'Carbohydrate, by difference(G)':[CD*0.45/4,CD*0.65/4],
-    'Water(G)':[0,2500],
-    'Sugars, Total(G)':[0,50],
-    'Vitamin A, IU(IU)':[CD,CD*3],
-    'Vitamin C, total ascorbic acid(MG)':[CD/60,CD/30],
-    'Calcium, Ca(MG)':[1000,5000],
-    'Fatty acids, total monounsaturated(G)':[CD*0.15/9,CD*0.20/9],
-    'Fatty acids, total polyunsaturated(G)':[CD*0.05/9,CD*0.10/9],
-    'Thiamin(MG)':[0,10000],
-    'Total lipid (fat)(G)':[0,CD*0.30/9],
-    }, index=['min', 'max']).T
-
-inequality_vars = [i for i in columns_of_interest if i not in ['CATEGORY','FOOD_NAME','Energy(KCAL)']]
-
-#%% Limits
-
-CD=2200
-
+CD=1800
 # We need a format as:
 # nutrient_constraints = {
 #     'protein': {'min': 30, 'max': 500},
@@ -308,81 +261,26 @@ CD=2200
 
 
 limits2 = {
+    'Energy(KCAL)':{'min':int(CD*0.95),'max':int(CD)},
     'Protein(G)':{'min':int(CD*0.10/4),'max':int(CD*0.35/4)},
-    'Cholesterol(MG)':{'min':0,'max':300},
-    'Fiber, total dietary(G)':{'min':25,'max':500},
+    'Carbohydrate, by difference(G)':{'min':int(CD*0.45/4),'max':int(CD*0.65/4)},
+    'Total lipid (fat)(G)':{'min':0,'max':int(CD*0.30/9)},
+    'Fatty acids, total monounsaturated(G)':{'min':int(CD*0.15/9),'max':int(CD*0.20/9)},
+    'Fatty acids, total polyunsaturated(G)':{'min':int(CD*0.05/9),'max':int(CD*0.10/9)},    'Cholesterol(MG)':{'min':0,'max':300},
+    'Fatty acids, total saturated(G)':{'min':int(CD*0.04/9),'max':int(CD*0.06/9)},
     'Fatty acids, total trans(G)':{'min':0,'max':int(0.01*CD/9)},
+    'Fiber, total dietary(G)':{'min':25,'max':500},
     'Iron, Fe(MG)':{'min':18,'max':80},
     'Sodium, Na(MG)':{'min':0,'max':300},
-    'Fatty acids, total saturated(G)':{'min':int(CD*0.04/9),'max':int(CD*0.06/9)},
-    'Carbohydrate, by difference(G)':{'min':int(CD*0.45/4),'max':int(CD*0.65/4)},
-    'Water(G)':{'min':0,'max':2500},
     'Sugars, Total(G)':{'min':0,'max':50},
     'Vitamin A, IU(IU)':{'min':int(CD),'max':int(CD*3)},
     'Vitamin C, total ascorbic acid(MG)':{'min':int(CD/60),'max':int(CD/30)},
     'Calcium, Ca(MG)':{'min':1000,'max':5000},
-    'Fatty acids, total monounsaturated(G)':{'min':int(CD*0.15/9),'max':int(CD*0.20/9)},
-    'Fatty acids, total polyunsaturated(G)':{'min':int(CD*0.05/9),'max':int(CD*0.10/9)},
     'Thiamin(MG)':{'min':0,'max':10000},
-    'Total lipid (fat)(G)':{'min':0,'max':int(CD*0.30/9)},
+    'Water(G)':{'min':0,'max':2500},
     }
 # To convert into the same format as limits:
 # limits2 = pd.DataFrame(limits2).T
 
 with open("nutrition_constraints.json", "w") as file:
     json.dump(limits2, file)
-
-#%% Solving LP 
-
-def optimize_food_consumption(food_nutrient_facts, limits):
-    """
-    Parameters
-    ----------
-    food_nutrient_facts : pd.DataFrame
-        Contains information of at least, each of the variables of interest, 
-        for each food. In the Rows we expect the food, as a column the nutrient.
-        
-    limits : pd.DataFrame
-        As many rows as Nutrient limits we have. Two columns, one for the 
-        high limit, one for the low limit. 
-
-    Returns
-    -------
-    np.array
-        with information on the optimal allocation of each food to satisfy the 
-        defined constraints.
-
-    """
-    
-    # Minimization of objective Function
-    obj = -np.ones(food_nutrient_facts.shape[0])
-    
-    # Inequalities. Lhs smaller or equal than Rhs.
-    lhs_ineq1 = food_nutrient_facts[inequality_vars].T.values # Smaller than
-    lhs_ineq2 = -food_nutrient_facts[inequality_vars].T.values # Bigger than
-    rhs_ineq1 = limits.loc[inequality_vars]['max'].values
-    rhs_ineq2 = -limits.loc[inequality_vars]['min'].values
-    
-    lhs_ineq = np.concatenate((lhs_ineq1, lhs_ineq2))
-    rhs_ineq = np.concatenate((rhs_ineq1, rhs_ineq2))
-    
-    print(lhs_ineq)
-    print(rhs_ineq)
-    
-    # Equalities. Only for Calorie consumption. 
-    lhs_eq = food_nutrient_facts['Energy(KCAL)'].values.reshape((1,food_nutrient_facts.shape[0]))
-    rhs_eq = [CD]
-    
-    # Boundaries. Maximum 300 grams of any given product per day.
-    bnd = [(0,3) for i in range(food_nutrient_facts.shape[0])]
-    
-    opt = linprog(c=obj, A_ub=lhs_ineq, b_ub=rhs_ineq,
-                  A_eq=lhs_eq, b_eq=rhs_eq, bounds=bnd,
-                  method="highs")
-    print(opt)
-    return opt.x
-
-filtered['Solution'] = optimize_food_consumption(filtered, limits)
-
-calculate_nutrient_scores(filtered, filtered['Solution'])
-
