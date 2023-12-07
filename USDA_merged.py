@@ -266,7 +266,8 @@ limits2 = {
     'Carbohydrate, by difference(G)':{'min':int(CD*0.45/4),'max':int(CD*0.65/4)},
     'Total lipid (fat)(G)':{'min':0,'max':int(CD*0.30/9)},
     'Fatty acids, total monounsaturated(G)':{'min':int(CD*0.15/9),'max':int(CD*0.20/9)},
-    'Fatty acids, total polyunsaturated(G)':{'min':int(CD*0.05/9),'max':int(CD*0.10/9)},    'Cholesterol(MG)':{'min':0,'max':300},
+    'Fatty acids, total polyunsaturated(G)':{'min':int(CD*0.05/9),'max':int(CD*0.10/9)},    
+    'Cholesterol(MG)':{'min':0,'max':300},
     'Fatty acids, total saturated(G)':{'min':int(CD*0.04/9),'max':int(CD*0.06/9)},
     'Fatty acids, total trans(G)':{'min':0,'max':int(0.01*CD/9)},
     'Fiber, total dietary(G)':{'min':25,'max':500},
@@ -284,3 +285,26 @@ limits2 = {
 
 with open("nutrition_constraints.json", "w") as file:
     json.dump(limits2, file)
+
+#%%
+import numpy as np
+Xcol = [
+    'Protein(G)',
+    'Carbohydrate, by difference(G)',
+    'Total lipid (fat)(G)',
+    'Fatty acids, total monounsaturated(G)',
+    'Fatty acids, total polyunsaturated(G)',
+    'Fatty acids, total saturated(G)',
+    'Fatty acids, total trans(G)',
+    'Fiber, total dietary(G)',
+    'Cholesterol(MG)',
+    'Iron, Fe(MG)',
+    'Sodium, Na(MG)',
+    'Sugars, Total(G)',
+    'Vitamin A, IU(IU)',
+    'Vitamin C, total ascorbic acid(MG)',
+    'Calcium, Ca(MG)',
+    'Thiamin(MG)',
+    'Water(G)',
+    ]
+aporte = pd.DataFrame(np.linalg.pinv(df_usda[Xcol].T.dot(df_usda[Xcol])).dot(df_usda[Xcol].T).dot(df_usda['Energy(KCAL)']), index=Xcol)
