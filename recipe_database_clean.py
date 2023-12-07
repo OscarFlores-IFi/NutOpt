@@ -6,8 +6,9 @@ Created on Thu Dec  7 19:39:24 2023
 """
 
 import json
-from bs4 import BeautifulSoup
+# from bs4 import BeautifulSoup
 import ast
+import re
 
 def load_from_file(filename):
     try:
@@ -39,12 +40,26 @@ def convert_to_number(value_with_unit):
         # Handle the case where conversion fails
         return 0
 
+def get_calories(title):
+    # Use regular expression to extract the numerical value
+    calories_match = re.search(r'\b(\d+(\.\d+)?)\s*Kcal\b', title)
+    
+    # Check if a match is found
+    if calories_match:
+        # Extract the matched numerical value as an integer
+        calories = float(calories_match.group(1))
+        return(calories)
+        print(calories)
+    else:
+        print("No calories information found in the title.")
 
 
 #%%
 foods = {}
 for key, item in recipes_database.items():
     nuevos_macros = {}
+    calorias = get_calories(item['title'])
+    nuevos_macros['Calorias'] = calorias
     for nutrient, value in item['macros'].items():
         nuevos_macros[nutrient] = convert_to_number(value)
     foods[key] = nuevos_macros
@@ -56,6 +71,7 @@ with open("avena_food_nutrients.json", "w") as file:
 CD=1800
 
 limits2 = {
+    'Calorias':{'min':int(CD*0.95),'max':int(CD)},
     'Proteinas':{'min':int(CD*0.10/4),'max':int(CD*0.35/4)},
     'Carbohidratos':{'min':int(CD*0.45/4),'max':int(CD*0.65/4)},
     'Fibra':{'min':25,'max':500},
