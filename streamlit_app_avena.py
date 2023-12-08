@@ -66,26 +66,26 @@ def optimize_food_consumption(foods, selected_foods, nutrient_constraints):
         rhs_ineq.append(current_amount - limits['min'])
         
     # Minimization of objective Function
-    obj = np.random.rand(len(lhs_ineq[0]))
+    obj = np.random.randn(len(lhs_ineq[0]))
 
-    # Boundaries. Maximum 300 grams of any given product per day.
-    bnd = [(0,3)]*len(lhs_ineq[0])
-    
-    # opt = linprog(c=obj, 
-    #               A_ub=lhs_ineq, 
-    #               b_ub=rhs_ineq,
-    #               bounds=bnd,
-    #               method = 'highs')
+    # Boundaries.
+    bnd = [(0,5)]*len(lhs_ineq[0])
     
     opt = linprog(c=obj, 
                   A_ub=lhs_ineq, 
                   b_ub=rhs_ineq,
                   bounds=bnd,
-                  method = 'highs',
-                  integrality=1)      
+                  method = 'highs')
     
-    return ({i:int(j) for i,j in zip(list_of_foods,opt.x) if j >0})
-    # return ({i:j for i,j in zip(list_of_foods,opt.x) if j >0})
+    # opt = linprog(c=obj, 
+    #               A_ub=lhs_ineq, 
+    #               b_ub=rhs_ineq,
+    #               bounds=bnd,
+    #               method = 'highs',
+    #               integrality=1)      
+    
+    # return ({i:int(j) for i,j in zip(list_of_foods,opt.x) if j >0})
+    return ({i:np.round(j,2) for i,j in zip(list_of_foods,opt.x) if j >0})
 
 @st.cache_resource
 def read_json(filename):
