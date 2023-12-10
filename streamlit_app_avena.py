@@ -53,10 +53,11 @@ def optimize_food_consumption(foods, selected_foods, nutrient_constraints):
         cont = 0
         for food in foods:
             if food not in st.session_state.food_quantities:
-                not_selected_foods_vector.append(foods[food][nutrient])
+                not_selected_foods_vector.append(foods[food][nutrient]/foods[food]['Calorias']) # We divide by calories to standardize the recipes on a vector of length 1 wrt calories.
                 if cont == 0:
                     list_of_foods.append(food)
         
+        print(nutrient)
         lhs_ineq.append(not_selected_foods_vector)
         lhs_ineq.append([-i for i in not_selected_foods_vector])
         
@@ -69,7 +70,7 @@ def optimize_food_consumption(foods, selected_foods, nutrient_constraints):
     obj = np.random.randn(len(lhs_ineq[0]))
 
     # Boundaries.
-    bnd = [(0,5)]*len(lhs_ineq[0])
+    bnd = [(0,700)]*len(lhs_ineq[0])
     
     opt = linprog(c=obj, 
                   A_ub=lhs_ineq, 
@@ -85,7 +86,15 @@ def optimize_food_consumption(foods, selected_foods, nutrient_constraints):
     #               integrality=1)      
     
     # return ({i:int(j) for i,j in zip(list_of_foods,opt.x) if j >0})
-    return ({i:np.round(j,2) for i,j in zip(list_of_foods,opt.x) if j >0})
+    
+    results = {i:np.round(j,2) for i,j in zip(list_of_foods,opt.x) if j > 0}
+    
+    print([foods[i]['Calorias'] for i,j in results.items()])
+    re_scaled_results = {i:np.round(j/foods[i]['Calorias'],2) for i,j in results.items()}
+    
+    print(re_scaled_results)
+    
+    return (re_scaled_results)
 
 @st.cache_resource
 def read_json(filename):
@@ -130,6 +139,7 @@ def main():
         try:
             new_items = optimize_food_consumption(foods, st.session_state.food_quantities, nutrient_constraints)
 
+            print(new_items)
             for new_food, new_quantity in new_items.items(): 
                 st.session_state.food_quantities[new_food] = new_quantity
         except:
