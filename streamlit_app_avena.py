@@ -57,7 +57,6 @@ def optimize_food_consumption(foods, selected_foods, nutrient_constraints):
                 if cont == 0:
                     list_of_foods.append(food)
         
-        print(nutrient)
         lhs_ineq.append(not_selected_foods_vector)
         lhs_ineq.append([-i for i in not_selected_foods_vector])
         
@@ -89,11 +88,8 @@ def optimize_food_consumption(foods, selected_foods, nutrient_constraints):
     
     results = {i:np.round(j,2) for i,j in zip(list_of_foods,opt.x) if j > 0}
     
-    print([foods[i]['Calorias'] for i,j in results.items()])
     re_scaled_results = {i:np.round(j/foods[i]['Calorias'],2) for i,j in results.items()}
-    
-    print(re_scaled_results)
-    
+        
     return (re_scaled_results)
 
 @st.cache_resource
@@ -139,7 +135,6 @@ def main():
         try:
             new_items = optimize_food_consumption(foods, st.session_state.food_quantities, nutrient_constraints)
 
-            print(new_items)
             for new_food, new_quantity in new_items.items(): 
                 st.session_state.food_quantities[new_food] = new_quantity
         except:
