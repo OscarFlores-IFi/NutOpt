@@ -150,7 +150,7 @@ def main():
     # Display existing sliders
     st.subheader("Cantidades actuales:")
     for food, quantity in st.session_state.food_quantities.items():
-        st.write(f"{food}: {quantity}")
+        st.write(f"https:/avena.io{food}: {quantity}")
 
     # Create or get the nutrient_limits dictionary from session state
     if 'nutrient_limits' not in st.session_state:
