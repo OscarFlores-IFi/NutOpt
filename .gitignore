@@ -23,6 +23,11 @@ nutrient.csv
 retention_factor.csv
 sr_legacy_food.csv
 
+# SMAE
+cuadro-de-equivalentes-en-excel-smae.xlsx
+*.pdf
+
+
 
 # C extensions
 *.so

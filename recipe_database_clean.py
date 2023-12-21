@@ -57,40 +57,43 @@ def get_calories(title):
 #%%
 foods = {}
 for key, item in recipes_database.items():
-    nuevos_macros = {}
-    calorias = get_calories(item['title'])
-    nuevos_macros['Calorias'] = calorias
-    for nutrient, value in item['macros'].items():
-        nuevos_macros[nutrient] = convert_to_number(value)
-    foods[key] = nuevos_macros
+    if len(item['ingredients']) > 5:
+        nuevos_macros = {}
+        calorias = get_calories(item['title'])
+        nuevos_macros['Calorias'] = calorias
+        for nutrient, value in item['macros'].items():
+            nuevos_macros[nutrient] = convert_to_number(value)
+        foods[key] = nuevos_macros
 
 with open("avena_food_nutrients.json", "w") as file:
     json.dump(foods, file)
     
 #%%
-CD=1800
+mult = 1
+CD=1800*mult
+
 
 limits2 = {
     'Calorias':{'min':int(CD*0.95),'max':int(CD)},
     'Proteinas':{'min':int(CD*0.10/4),'max':int(CD*0.35/4)},
     'Carbohidratos':{'min':int(CD*0.45/4),'max':int(CD*0.65/4)},
-    'Fibra':{'min':25,'max':500},
-    'Potasio':{'min':2000,'max':10000},
-    'Calcio':{'min':1000,'max':5000},
+    'Fibra':{'min':25*mult,'max':500*mult},
+    'Potasio':{'min':2000*mult,'max':10000*mult},
+    'Calcio':{'min':1000*mult,'max':5000*mult},
     'Grasas monoinsaturadas':{'min':int(CD*0.15/9),'max':int(CD*0.20/9)},
     'Grasas poliinsaturadas':{'min':int(CD*0.05/9),'max':int(CD*0.10/9)},
     'Grasas saturadas':{'min':int(CD*0.04/9),'max':int(CD*0.06/9)},
-    'Colesterol':{'min':0,'max':300},
+    'Colesterol':{'min':0*mult,'max':300*mult},
     'Vitamina A':{'min':int(CD),'max':int(CD*3)},
-    'Sodio':{'min':0,'max':300},
-    'Vitamina B6':{'min':2,'max':12},
-    'Vitamina B12':{'min':0,'max':1000},
-    'Magnesio':{'min':0,'max':400},
-    'Tiamina':{'min': 0,'max':12},
-    'Riboflavina':{'min':0.6,'max':3},
-    'Niacina':{'min':0,'max':30},
-    'Folato':{'min':0,'max':1000},
-    'Zinc':{'min':0,'max':40},
+    'Sodio':{'min':0*mult,'max':300*mult},
+    'Vitamina B6':{'min':2*mult,'max':12*mult},
+    'Vitamina B12':{'min':0*mult,'max':1000*mult},
+    'Magnesio':{'min':0*mult,'max':400*mult},
+    'Tiamina':{'min': 0*mult,'max':12*mult},
+    'Riboflavina':{'min':0.6*mult,'max':3*mult},
+    'Niacina':{'min':0*mult,'max':30*mult},
+    'Folato':{'min':0*mult,'max':1000*mult},
+    'Zinc':{'min':0*mult,'max':40*mult},
     }
 
 with open("avena_nutrition_constraints.json", "w") as file:
