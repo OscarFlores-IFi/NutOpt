@@ -67,7 +67,15 @@ for key, item in recipes_database.items():
 
 with open("avena_food_nutrients.json", "w") as file:
     json.dump(foods, file)
+
+#%%
     
+list_of_ingredients = {}
+for key, item in recipes_database.items():
+    for ingredient in item['ingredients']:
+        if (ingredient not in list_of_ingredients) and (ingredient != 'optional'):
+            list_of_ingredients[ingredient] = item['ingredients'][ingredient]['link']
+
 #%%
 mult = 1
 CD=1800*mult
