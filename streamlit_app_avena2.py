@@ -25,22 +25,9 @@ def replace_underscores_with_spaces(text):
     return text.replace("_", " ")
 
 # Function to calculate the current nutrient amount based on user-defined food quantities
-def calculate_current_amount(nutrient, foods, nutrient_constraints):
+def calculate_current_amount(nutrient, foods):
     current_value = sum(foods[food][nutrient] * st.session_state.food_quantities.get(food, 0) for food in foods)
-    percentage = (current_value / (nutrient_constraints[nutrient]['max']*1.3))
-    if percentage < 1:
-        return (round(current_value), percentage)
-    return (round(current_value), 100)
-
-
-def get_text_to_show(identifier, current_amount):
-    min_limit, max_limit = st.session_state.nutrient_limits[identifier]
-    if current_amount < min_limit:
-        return ":orange[below limits]"  
-    elif current_amount > max_limit:
-        return ":orange[above limits]"      
-    else:
-        return ":green[within limits]"
+    return round(current_value)
 
 def optimize_food_consumption(foods, selected_foods, nutrient_constraints):
   
@@ -102,6 +89,8 @@ def read_json(filename):
 # Food nutritional facts
 foods = read_json(directory + "avena_food_nutrients.json")
     
+"avena_food_categories.json"
+
 # Nutritional constraints
 nutrient_constraints = read_json(directory + "avena_nutrition_constraints.json")
 

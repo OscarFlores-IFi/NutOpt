@@ -69,13 +69,34 @@ with open("avena_food_nutrients.json", "w") as file:
     json.dump(foods, file)
 
 #%%
-    
-list_of_ingredients = {}
-for key, item in recipes_database.items():
-    for ingredient in item['ingredients']:
-        if (ingredient not in list_of_ingredients) and (ingredient != 'optional'):
-            list_of_ingredients[ingredient] = item['ingredients'][ingredient]['link']
+# list_of_ingredients = {}
+# for name, recipe in recipes_database.items():
+#     for ingredient in recipe['ingredients']:
+#         if (ingredient not in list_of_ingredients) and (ingredient != 'optional'):
+#             list_of_ingredients[ingredient] = ''
+            
+# Do not dump!! categories were manually added into the json file :(  Categories not provided by Avena.
+# with open("avena_ingredient_list1.json", "w") as file:
+#     json.dump(list_of_ingredients, file)
 
+
+
+#%% Get categories and amounts for each recipe according to their ingredients
+list_of_ingredients = load_from_file(r"C:\Users\52331\avena_ingredient_list.json") # using modified version of ingredients
+
+avena_food_categories = {}
+
+for name, recipe in recipes_database.items():
+    
+    category_contribution = {str(i+1):0 for i in range(15)} # initialize list of all categories at 0s
+    for ingredient in recipe['ingredients']:
+        if ingredient != 'optional':
+            category_contribution[str(list_of_ingredients[ingredient])] = category_contribution[str(list_of_ingredients[ingredient])] + int(recipe['ingredients'][ingredient]['amount'])
+    avena_food_categories[name] = category_contribution
+    
+with open("avena_food_categories.json", "w") as file:
+    json.dump(avena_food_categories, file)
+         
 #%%
 mult = 1
 CD=1800*mult
