@@ -48,14 +48,17 @@ def optimize_food_consumption(foods, selected_foods, nutrient_constraints):
     rhs_ineq = []
     list_of_foods = []
     
+    cont = 0
+
     for nutrient, limits in nutrient_constraints.items():
         not_selected_foods_vector = []
-        cont = 0
         for food in foods:
             if food not in st.session_state.food_quantities:
                 not_selected_foods_vector.append(foods[food][nutrient]/foods[food]['Calorias']) # We divide by calories to standardize the recipes on a vector of length 1 wrt calories.
                 if cont == 0:
                     list_of_foods.append(food)
+        cont += 1
+
         
         lhs_ineq.append(not_selected_foods_vector)
         lhs_ineq.append([-i for i in not_selected_foods_vector])
@@ -89,7 +92,9 @@ def optimize_food_consumption(foods, selected_foods, nutrient_constraints):
     results = {i:np.round(j,2) for i,j in zip(list_of_foods,opt.x) if j > 0}
     
     re_scaled_results = {i:np.round(j/foods[i]['Calorias'],2) for i,j in results.items()}
-        
+    
+    print(len(list_of_foods))        
+ 
     return (re_scaled_results)
 
 @st.cache_resource
