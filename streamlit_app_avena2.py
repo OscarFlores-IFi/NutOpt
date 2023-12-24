@@ -71,8 +71,11 @@ def optimize_food_consumption(food_categories, selected_foods, category_constrai
         
         current_amount_category , _ = calculate_current_amount(category, food_categories)
         
-        rhs_ineq.append(limits['max']-current_amount_category)
-        rhs_ineq.append(current_amount_category - limits['min'])
+        identifier = replace_spaces_and_commas_with_underscores(category)
+        min_, max_ = st.session_state.category_limits[identifier]
+        
+        rhs_ineq.append(max_-current_amount_category)
+        rhs_ineq.append(current_amount_category - min_)
         
     # Minimization of objective Function
     obj = np.random.randn(len(lhs_ineq[0]))
@@ -95,7 +98,7 @@ def optimize_food_consumption(food_categories, selected_foods, category_constrai
                   method = 'highs',
                   integrality=1)      
       
-    return ({i:int(j) for i,j in zip(list_of_foods,opt.x) if j >0})
+    return ({i:j for i,j in zip(list_of_foods,opt.x) if j >0})
     
 @st.cache_resource
 def read_json(filename):
@@ -112,12 +115,7 @@ food_categories = read_json(directory + "avena_food_categories.json")
 
 #%% Streamlit app
 def main():
-          
-    def show_nutrients():
-        for nutrient in list_of_food_nutrients:
-            current_amount, _ = calculate_current_amount(nutrient, food_nutrients)
-            st.write(f"{nutrient}: {current_amount}")
-            
+                     
     st.title("Nutritional Optimization App")
 
     list_of_food_nutrients = food_nutrients[list(food_nutrients)[0]].keys()
@@ -175,9 +173,9 @@ def main():
         # Use st.progress for the progress bar
         st.progress(percentage_of_max_lim, text=text_to_show)    
 
-    if st.button("Calculate Nutrients"):
-        show_nutrients()        
-
+    for nutrient in list_of_food_nutrients:
+        current_amount, _ = calculate_current_amount(nutrient, food_nutrients)
+        st.write(f"{nutrient}: {current_amount}")    
 
 if __name__ == "__main__":
     main()
