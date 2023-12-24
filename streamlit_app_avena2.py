@@ -97,7 +97,7 @@ def optimize_food_consumption(food_categories, selected_foods, category_constrai
                   method = 'highs',
                   integrality=1)      
       
-    return ({i:j for i,j in zip(list_of_foods,opt.x) if j >0})
+    return ({i:round(j) for i,j in zip(list_of_foods,opt.x) if j >0})
     
 @st.cache_resource
 def read_json(filename):
