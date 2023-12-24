@@ -32,7 +32,6 @@ def replace_underscores_with_spaces(text):
 # Function to calculate the current category amount based on user-defined food quantities
 def calculate_current_amount(category, foods):
     current_value = sum(foods[food][category] * st.session_state.food_quantities.get(food, 0) for food in foods)
-    print(st.session_state.food_quantities)
 
     percentage = (current_value / (10))
     if percentage < 1:
@@ -152,7 +151,7 @@ def main():
     # Display existing sliders
     st.subheader("Cantidades actuales:")
     for food, quantity in st.session_state.food_quantities.items():
-        st.write(f"https:/avena.io{food}: {quantity}")
+        st.write(f"https:/avena.io{food}: {int(quantity)}")
 
     # Create or get the category_limits dictionary from session state
     if 'category_limits' not in st.session_state:
