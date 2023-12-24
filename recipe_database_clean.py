@@ -56,16 +56,16 @@ def get_calories(title):
 
 #%%
 foods = {}
-for key, item in recipes_database.items():
-    if len(item['ingredients']) > 5:
+for name, recipe in recipes_database.items():
+    if len(recipe['ingredients']) > 5:
         nuevos_macros = {}
-        calorias = get_calories(item['title'])
+        calorias = get_calories(recipe['title'])
         nuevos_macros['Calorias'] = calorias
-        for nutrient, value in item['macros'].items():
+        for nutrient, value in recipe['macros'].items():
             nuevos_macros[nutrient] = convert_to_number(value)
-        foods[key] = nuevos_macros
+        foods[name] = nuevos_macros
 
-with open("avena_food_nutrients.json", "w") as file:
+with open(r"C:\Users\52331\avena_food_nutrients.json", "w") as file:
     json.dump(foods, file)
 
 #%%
@@ -79,22 +79,20 @@ with open("avena_food_nutrients.json", "w") as file:
 # with open("avena_ingredient_list1.json", "w") as file:
 #     json.dump(list_of_ingredients, file)
 
-
-
 #%% Get categories and amounts for each recipe according to their ingredients
 list_of_ingredients = load_from_file(r"C:\Users\52331\avena_ingredient_list.json") # using modified version of ingredients
 
 avena_food_categories = {}
 
 for name, recipe in recipes_database.items():
+    if len(recipe['ingredients']) > 5:
+        category_contribution = {str(i+1):0 for i in range(15)} # initialize list of all categories at 0s
+        for ingredient in recipe['ingredients']:
+            if ingredient != 'optional':
+                category_contribution[str(list_of_ingredients[ingredient])] = category_contribution[str(list_of_ingredients[ingredient])] + int(recipe['ingredients'][ingredient]['amount'])
+        avena_food_categories[name] = category_contribution
     
-    category_contribution = {str(i+1):0 for i in range(15)} # initialize list of all categories at 0s
-    for ingredient in recipe['ingredients']:
-        if ingredient != 'optional':
-            category_contribution[str(list_of_ingredients[ingredient])] = category_contribution[str(list_of_ingredients[ingredient])] + int(recipe['ingredients'][ingredient]['amount'])
-    avena_food_categories[name] = category_contribution
-    
-with open("avena_food_categories.json", "w") as file:
+with open(r"C:\Users\52331\avena_food_categories.json", "w") as file:
     json.dump(avena_food_categories, file)
          
 #%%
