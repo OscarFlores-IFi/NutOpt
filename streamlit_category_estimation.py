@@ -161,15 +161,20 @@ def main():
     #     st.write(get_text_color(maximum, category))
         
    
+    col1, col2 = st.columns([4,3])
+
+    
     # Iterate over categories
     for category in smae_categories.keys():
         identifier = replace_spaces_and_commas_with_underscores(category)    
 
-        col1, col2 = st.columns([4,3])
-
         # In the second column, display sliders
         with col2:
             st.session_state.smae_categories[identifier] = st.slider(f"Cantidad de {category}", 0, 10, label_visibility='hidden')        
+    
+    # Iterate over categories
+    for category in smae_categories.keys():
+        identifier = replace_spaces_and_commas_with_underscores(category)    
         
         # In the first column, display information
         with col1:
