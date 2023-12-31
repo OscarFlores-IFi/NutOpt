@@ -47,16 +47,18 @@ def calculate_current_macros(macronutrient):
     return round(current_macro), round(current_energy_per_macro) 
 
 
-def get_text_to_show(identifier, current_amount):
-    min_limit, max_limit = st.session_state.category_limits[identifier]
-    if current_amount < min_limit:
-        return ":orange[below limits]"  
-    elif current_amount > max_limit:
-        return ":orange[above limits]"      
+def get_text_color(maximum, category):
+    
+    current_amount = st.session_state.smae_categories.get(replace_spaces_and_commas_with_underscores(category), 0)
+    if current_amount > maximum:
+        return f":orange[{category}, Max:{maximum})]"
+    elif current_amount == maximum:
+        return f":white[{category}, Max:{maximum})]"
     else:
-        return ":green[within limits]"
+        return f":green[{category}, Max:{maximum})]"
 
-def calculate_min_max(category, identifier, limits):
+def calculate_max(category, identifier, limits):
+    
     multiplier = {'Proteinas': 4, 'Lipidos': 9, 'Carbohidratos': 4}
 
     lhs_ineq = []
@@ -104,38 +106,11 @@ def calculate_min_max(category, identifier, limits):
     #               method = 'highs',
     #               integrality=1)      
     try: 
-        maximum = opt.x[idx] + st.session_state.smae_categories.get(identifier, 0)
+        maximum = np.floor(opt.x[idx]) + st.session_state.smae_categories.get(identifier, 0)
     except:
-        print("Limite ha sido superado, reduzca cantidad.")
-        maximum = st.session_state.smae_categories.get(identifier, 0)
+        maximum = 0
     
-    #################
-    # FOR THE MINIMUM
-    obj[idx] = 1
-
-    opt = linprog(c=obj, 
-                  A_ub=lhs_ineq, 
-                  b_ub=rhs_ineq,
-                  bounds=bnd,
-                  method = 'highs')
-    
-    # return ({i:np.round(j,2) for i,j in zip(list_of_foods,opt.x) if j > 0})
-
-    # opt = linprog(c=obj, 
-    #               A_ub=lhs_ineq, 
-    #               b_ub=rhs_ineq,
-    #               bounds=bnd,
-    #               method = 'highs',
-    #               integrality=1)  
-    
-    try: 
-        minimum = opt.x[idx]
-    except:
-        print("No se qpd.")
-        minimum = 0
-    
-    #################
-    return(np.floor(minimum), np.floor(maximum))
+    return(maximum)
 
     # return ({i:round(j) for i,j in zip(list_of_foods,opt.x) if j >0})
     
@@ -154,17 +129,21 @@ def main():
     st.title("Nutritional Optimization App")
     
     # Calories = st.text_input('Calorie consumption:', 2000)
-    Calories = 2000
+    Calories = 2200
 
     limits = {"Proteinas":{"min":Calories*0.1,"max":Calories*0.35}, 
               "Lipidos":{"min":Calories*0.2,"max":Calories*0.35}, 
               "Carbohidratos":{"min":Calories*0.45,"max":Calories*0.65}}
     
-    if st.button("Reset"):
-        del st.session_state.smae_categories
-        # Delete all the items in Session state
-        for key in st.session_state.keys():
-            del st.session_state[key]
+    # if st.button("Reset"):
+    #     # Delete all the items in Session state
+    #     for key in smae_categories.keys():
+    #         try:
+    #             del st.session_state.smae_categories[key]
+    #         except KeyError:
+    #             pass
+    #     del st.session_state.smae_categories
+
 
     # Dropdown for selecting a food
     # selected_food = st.selectbox("Selecciona una comida:", list(food_categories.keys()))
@@ -173,21 +152,31 @@ def main():
     if 'smae_categories' not in st.session_state:
         st.session_state.smae_categories = {}
 
-    # User input for food quantities
-    
-    print("\n")
-
+    # for category in smae_categories.keys():
+    #     identifier = replace_spaces_and_commas_with_underscores(category)
+        
+    #     st.session_state.smae_categories[identifier] = st.slider(f"Cantidad de {category}", 0, 10, label_visibility='hidden')
+        
+    #     maximum = calculate_max(category, identifier, limits)
+    #     st.write(get_text_color(maximum, category))
+        
+   
+    # Iterate over categories
     for category in smae_categories.keys():
-        identifier = replace_spaces_and_commas_with_underscores(category)
-        
-        minimum, maximum = calculate_min_max(category, identifier, limits)
-        st.write(f"{category}, Min: {minimum}, Max:{maximum}")
-        
-        st.session_state.smae_categories[identifier] = st.slider(f"Cantidad de {category}", 0, 10)
-        
+        identifier = replace_spaces_and_commas_with_underscores(category)    
 
+        col1, col2 = st.columns([4,3])
+
+        # In the second column, display sliders
+        with col2:
+            st.session_state.smae_categories[identifier] = st.slider(f"Cantidad de {category}", 0, 10, label_visibility='hidden')        
         
-    
+        # In the first column, display information
+        with col1:
+            maximum = calculate_max(category, identifier, limits)
+            st.write(get_text_color(maximum, category))      
+  
+        
     for macro in limits: 
         
         current_macros, _ = calculate_current_macros(macro)
