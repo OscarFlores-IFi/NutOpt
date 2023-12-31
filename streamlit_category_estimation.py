@@ -51,11 +51,11 @@ def get_text_color(maximum, category):
     
     current_amount = st.session_state.smae_categories.get(replace_spaces_and_commas_with_underscores(category), 0)
     if current_amount > maximum:
-        return f":orange[{category}, Max:{maximum})]"
+        return f":orange[{category}, Current:{current_amount}, Max:{maximum})]"
     elif current_amount == maximum:
-        return f":white[{category}, Max:{maximum})]"
+        return f":white[{category}, Current:{current_amount}, Max:{maximum})]"
     else:
-        return f":green[{category}, Max:{maximum})]"
+        return f":green[{category}, Current:{current_amount}, Max:{maximum})]"
 
 def calculate_max(category, identifier, limits):
     
@@ -161,23 +161,36 @@ def main():
     #     st.write(get_text_color(maximum, category))
         
    
-    col1, col2 = st.columns([4,3])
+    col1, col2, col3 = st.columns([3,5,3])
 
     
     # Iterate over categories
     for category in smae_categories.keys():
         identifier = replace_spaces_and_commas_with_underscores(category)    
 
-        # In the second column, display sliders
-        with col2:
-            st.session_state.smae_categories[identifier] = st.slider(f"Cantidad de {category}", 0, 10, label_visibility='hidden')        
+        with col1:    
+            # Display buttons for decreasing amount
+            st.button(f"{category} - 1", key=f"{identifier}_reduce")
+            if st.session_state.smae_categories[identifier] >= 1:
+                if st.session_state[f"{identifier}_reduce"]:
+                    st.session_state.smae_categories[identifier] -= 1
+
+        with col3:
+            # Display buttons for increasing amount
+            st.button(f"{category} + 1", key=f"{identifier}_increase")
+        
+            # Check button clicks and update size accordingly
+            if st.session_state.smae_categories[identifier] >= 0:
+                if st.session_state[f"{identifier}_increase"]:
+                    st.session_state.smae_categories[identifier] += 1
+                    
     
     # Iterate over categories
     for category in smae_categories.keys():
         identifier = replace_spaces_and_commas_with_underscores(category)    
         
         # In the first column, display information
-        with col1:
+        with col2:
             maximum = calculate_max(category, identifier, limits)
             st.write(get_text_color(maximum, category))      
   
