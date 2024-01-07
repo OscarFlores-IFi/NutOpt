@@ -109,12 +109,28 @@ def read_json(filename):
 food_nutrients = read_json(directory + "avena_food_nutrients.json")
 # Nutritional constraints
 category_constraints = read_json(directory + "category_constraints.json")
+category_names = {"1": "Verduras",
+                     "2": "Frutas",
+                     "3": "Cereales sin grasa",
+                     "4": "Cereales con grasa",
+                     "5": "Leguminosas",
+                     "6": "Proteinas muy bajas en Grasa",
+                     "7": "Proteinas bajas en Grasa",
+                     "8": "Proteinas moderadas en Grasa",
+                     "9": "Proteinas altas en Grasa",
+                     "10": "Leche deslactosada",
+                     "11": "Leche semideslactosada",
+                     "12": "Leche entera",
+                     "13": "Leche con azucar",
+                     "14": "Grasas sin Proteina",
+                     "15": "Grasas con Proteina"}
 # Food categories
 food_categories = read_json(directory + "avena_food_categories.json")
 
 #%% Streamlit app
 def main():
-                     
+                    
+    # np.random.seed(123)
     st.title("Nutritional Optimization App")
 
     list_of_food_nutrients = food_nutrients[list(food_nutrients)[0]].keys()
@@ -161,7 +177,7 @@ def main():
     st.subheader("Limites nutricionales:")
     for category, limits in category_constraints.items():
         identifier = replace_spaces_and_commas_with_underscores(category)
-        st.session_state.category_limits[identifier] = st.slider(f"Limite de {category}",                          \
+        st.session_state.category_limits[identifier] = st.slider(f"Limite de {category_names[category]}",                          \
                                                                  0,                                             \
                                                                  10,                        \
                                                                  (int(limits['min']), int(limits['max'])))
