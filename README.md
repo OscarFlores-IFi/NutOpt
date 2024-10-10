@@ -1,6 +1,29 @@
 # NutOpt
 Yet another Nutritional Optimizer. As all the already available in github, but made by me :)
 
+### Running in local env. 
+
+``` bash
+pip install virtualenv
+cd [location of repo] # Let's keep the venv by the side of the code
+python -m venv venv
+source venv/Scripts/activate
+pip install -r requirements.txt
+```
+
+
+set working directory in the code streamlit_avena2.py
+``` bash
+python -m streamlit run streamlit_app_avena2.py # Using counts of (vegetables, fruits, ...)
+python -m streamlit run streamlit_app_avena.py # Using recipies and macros
+python -m streamlit run streamlit_app_avena.py # Using ingredients and macros
+
+```
+
+So, if the repo is in 'C:\users\oscarflores_ifi\repos\NutOpt'
+the complete direction should be modified as 'C:\users\oscarflores_ifi\repos\NutOpt\streamlit_avena2.py'
+
+
 Sorry for the inconvenience, but I haven't dedicated enough time to make this beautifully packaged, so everything is just a mess by now. 
 Important files we have to run are the streamlit ones. Specially: 
 - streamlit_app_avena2.py 
@@ -16,3 +39,6 @@ https://fdc.nal.usda.gov/download-datasets.html
 
 National Institutes of Health. (info on Reference Intakes)
 https://www.ncbi.nlm.nih.gov/books/NBK545442/
+
+
+

@@ -11,7 +11,7 @@ import json
 from scipy.optimize import linprog
 import numpy as np
 
-directory = r'C:\Users\52331\\'
+directory = r"C:\Users\52331\Documents\GitHub\NutOpt\\"
 
 
 #%% Define functions
